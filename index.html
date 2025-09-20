@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>AgroLink Dashboard</title>
+  <link rel="stylesheet" href="assets/style.css" />
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body class="light-mode">
+  <!-- Sidebar -->
+  <aside class="sidebar">
+    <div class="logo">
+      <img src="assets/images/logo.png" alt="AgroLink Logo" />
+      <h2>AgroLink</h2>
+    </div>
+    <nav class="menu">
+      <a href="index.html" class="active">Dashboard</a>
+      <a href="crops.html">Crops</a>
+      <a href="livestock.html">Livestock</a>
+      <a href="fields.html">Fields</a>
+      <a href="weather.html">Weather</a>
+      <a href="finance.html">Finance</a>
+      <a href="reports.html">Reports</a>
+      <a href="settings.html">Settings</a>
+    </nav>
+  </aside>
+
+  <!-- Main Content -->
+  <main class="content">
+    <!-- Header -->
+    <header class="topbar">
+      <h1>Dashboard</h1>
+      <button id="theme-toggle" class="theme-btn">🌙</button>
+    </header>
+
+    <!-- Metrics Grid -->
+    <section class="metrics-grid">
+      <div class="metric-card">
+        <h3>Total Crop Yield</h3>
+        <p>12,450 kg</p>
+      </div>
+      <div class="metric-card">
+        <h3>Livestock Health</h3>
+        <p>98% Healthy</p>
+      </div>
+      <div class="metric-card">
+        <h3>Monthly Revenue</h3>
+        <p>$5,600</p>
+      </div>
+      <div class="metric-card">
+        <h3>Field Coverage</h3>
+        <p>245 Acres</p>
+      </div>
+    </section>
+
+    <!-- Charts Section -->
+    <section class="charts-grid">
+      <div class="chart-card">
+        <h3>Crop Yield (kg)</h3>
+        <canvas id="yieldChart"></canvas>
+      </div>
+      <div class="chart-card">
+        <h3>Revenue Growth ($)</h3>
+        <canvas id="revenueChart"></canvas>
+      </div>
+    </section>
+  </main>
+
+  <script src="assets/script.js"></script>
+</body>
+</html>

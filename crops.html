@@ -1,0 +1,283 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>AgroLink — Crops</title>
+
+<!-- Fonts & Icons -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://cdn.jsdelivr.net/npm/remixicon@4.3.0/fonts/remixicon.css" rel="stylesheet"/>
+
+<!-- Styles -->
+<link rel="stylesheet" href="assets/style.css" />
+
+<!-- Chart.js -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
+</head>
+<body>
+<div class="layout">
+  <!-- Sidebar -->
+  <aside class="sidebar">
+    <div class="brand"><i class="ri-plant-line"></i> AgroLink</div>
+    <nav class="nav">
+      <h4>MENU</h4>
+      <a href="index.html"><i class="ri-dashboard-line"></i> Dashboard</a>
+      <a href="crops.html" class="active"><i class="ri-seedling-line"></i> Crops</a>
+      <a href="livestock.html"><i class="ri-medicine-bottle-line"></i> Livestock</a>
+      <a href="fields.html"><i class="ri-map-pin-line"></i> Fields</a>
+      <a href="weather.html"><i class="ri-cloud-windy-line"></i> Weather</a>
+      <a href="equipment.html"><i class="ri-tools-line"></i> Equipment</a>
+      <a href="finance.html"><i class="ri-money-dollar-box-line"></i> Finance</a>
+      <a href="reports.html"><i class="ri-bar-chart-2-line"></i> Reports</a>
+      <a href="settings.html"><i class="ri-settings-3-line"></i> Settings</a>
+    </nav>
+  </aside>
+
+  <!-- Main -->
+  <main>
+    <!-- Topbar -->
+    <div class="topbar">
+      <div class="search"><i class="ri-search-line"></i><input placeholder="Search crops, fields, tasks..." /></div>
+      <div class="top-actions">
+        <button class="btn"><i class="ri-calendar-line"></i><span id="rangeLabel">Jan 2025</span></button>
+        <button class="btn btn-primary"><i class="ri-add-circle-line"></i> Add Crop</button>
+        <button id="themeToggle" class="theme-toggle"><i class="ri-contrast-2-line"></i> Theme</button>
+        <div class="avatar">
+          <img src="https://i.pravatar.cc/60?img=13" alt="">
+          <div>
+            <div style="font-weight:600">Oluwasegun Oyebode</div>
+            <small class="subtitle">Farm Director</small>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Content -->
+    <div class="content">
+      <!-- Page Header -->
+      <div style="display:flex;justify-content:space-between;align-items:flex-end;flex-wrap:wrap;gap:14px">
+        <div>
+          <div class="page-title">Crop Management Hub</div>
+          <div class="subtitle">Advanced tools to track growth, manage inputs, and optimize yield.</div>
+        </div>
+        <div style="display:flex;gap:8px">
+          <button class="btn btn-primary"><i class="ri-add-line"></i> New Planting</button>
+          <button class="btn"><i class="ri-file-chart-line"></i> Yield Report</button>
+        </div>
+      </div>
+
+      <!-- Quick Insights -->
+      <section class="grid metrics" style="margin-top:16px">
+        <div class="card">
+          <h4><i class="ri-cloudy-line"></i> Weather Alert</h4>
+          <p>Heavy rainfall expected in 2 days. Adjust irrigation schedules.</p>
+        </div>
+        <div class="card">
+          <h4><i class="ri-drop-line"></i> Irrigation Reminder</h4>
+          <p>6 fields need irrigation in the next 24 hours.</p>
+        </div>
+        <div class="card">
+          <h4><i class="ri-money-dollar-circle-line"></i> Market Update</h4>
+          <p>Maize prices up by 4% this week. Consider selling surplus.</p>
+        </div>
+      </section>
+
+      <!-- Crop Metrics -->
+      <section class="grid metrics" style="margin-top:16px">
+        <div class="card">
+          <div class="metric">
+            <div>
+              <small>Total Area Cultivated</small>
+              <h3>1,240 ha</h3>
+              <small class="up">▲ +5.4% growth</small>
+            </div>
+            <div class="icon" style="background:#ecfdf5;color:#16a34a"><i class="ri-landscape-line"></i></div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="metric">
+            <div>
+              <small>Active Crops</small>
+              <h3>8 Types</h3>
+              <small class="up">▲ 2 new varieties added</small>
+            </div>
+            <div class="icon" style="background:#f0fdf4;color:#22c55e"><i class="ri-seedling-line"></i></div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="metric">
+            <div>
+              <small>Average Yield</small>
+              <h3>6.8 t/ha</h3>
+              <small class="down">▼ Slight drop</small>
+            </div>
+            <div class="icon" style="background:#fff7ed;color:#f97316"><i class="ri-bar-chart-line"></i></div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="metric">
+            <div>
+              <small>Upcoming Harvests</small>
+              <h3>12 Fields</h3>
+              <small>• Next in 5 Days</small>
+            </div>
+            <div class="icon" style="background:#ecfeff;color:#0891b2"><i class="ri-calendar-event-line"></i></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Analytics -->
+      <section class="split" style="margin-top:16px">
+        <!-- Yield Chart -->
+        <div class="card">
+          <h4>Yield Trends</h4>
+          <div style="height:200px;">
+            <canvas id="yieldChart"></canvas>
+          </div>
+        </div>
+
+        <!-- Pests & Diseases -->
+        <div class="card">
+          <h4>Pests & Disease Alerts</h4>
+
+          <!-- Summary Badges -->
+          <div style="display:flex;gap:10px;flex-wrap:wrap;margin:10px 0;">
+            <span class="badge danger" style="background:#fee2e2;color:#b91c1c;padding:6px 12px;border-radius:20px;font-weight:600;">8 Active Alerts</span>
+            <span class="badge warning" style="background:#fef9c3;color:#92400e;padding:6px 12px;border-radius:20px;font-weight:600;">3 Critical</span>
+            <span class="badge success" style="background:#dcfce7;color:#166534;padding:6px 12px;border-radius:20px;font-weight:600;">5 Resolved This Week</span>
+          </div>
+
+          <!-- Chart -->
+         <!--  <div style="height:180px; margin:14px 0;">
+            <canvas id="pestChart"></canvas>
+          </div> -->
+
+          <!-- Alerts Table -->
+          <div style="overflow-x:auto;">
+            <table style="width:100%;border-collapse:collapse;font-size:14px;">
+              <thead style="background:#f3f4f6;">
+                <tr>
+                  <th style="padding:10px;text-align:left;">Crop</th>
+                  <th style="padding:10px;text-align:left;">Issue</th>
+                  <th style="padding:10px;text-align:left;">Severity</th>
+                  <th style="padding:10px;text-align:left;">Recommended Action</th>
+                  <th style="padding:10px;text-align:center;">Action</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr style="border-top:1px solid #e5e7eb;">
+                  <td style="padding:10px;">🌽 Maize</td>
+                  <td style="padding:10px;">Armyworm Infestation</td>
+                  <td style="padding:10px;"><span style="background:#fee2e2;color:#b91c1c;padding:4px 10px;border-radius:12px;font-weight:500;">Critical</span></td>
+                  <td style="padding:10px;">Immediate pesticide spraying</td>
+                  <td style="padding:10px;text-align:center;"><button class="btn btn-primary btn-sm">Resolve</button></td>
+                </tr>
+                <tr style="border-top:1px solid #e5e7eb;">
+                  <td style="padding:10px;">🍅 Tomatoes</td>
+                  <td style="padding:10px;">Leaf Blight</td>
+                  <td style="padding:10px;"><span style="background:#fef9c3;color:#92400e;padding:4px 10px;border-radius:12px;font-weight:500;">Moderate</span></td>
+                  <td style="padding:10px;">Apply fungicide within 48h</td>
+                  <td style="padding:10px;text-align:center;"><button class="btn btn-primary btn-sm">Resolve</button></td>
+                </tr>
+                <tr style="border-top:1px solid #e5e7eb;">
+                  <td style="padding:10px;">🥔 Cassava</td>
+                  <td style="padding:10px;">Root Rot Risk</td>
+                  <td style="padding:10px;"><span style="background:#fef9c3;color:#92400e;padding:4px 10px;border-radius:12px;font-weight:500;">Moderate</span></td>
+                  <td style="padding:10px;">Improve drainage in affected plots</td>
+                  <td style="padding:10px;text-align:center;"><button class="btn btn-primary btn-sm">Resolve</button></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- Crop List -->
+      <section class="card" style="margin-top:16px">
+        <h4>Active Crop List</h4>
+        <table style="width:100%;border-collapse:collapse;margin-top:10px">
+          <thead style="background:var(--muted);text-align:left">
+            <tr>
+              <th style="padding:8px">Crop</th>
+              <th>Area (ha)</th>
+              <th>Yield (t/ha)</th>
+              <th>Status</th>
+              <th>Next Action</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td style="padding:8px">🌽 Maize</td>
+              <td>450</td>
+              <td>3.2</td>
+              <td><span class="badge success">Healthy</span></td>
+              <td>Irrigation</td>
+            </tr>
+            <tr>
+              <td style="padding:8px">🥔 Cassava</td>
+              <td>320</td>
+              <td>2.8</td>
+              <td><span class="badge warning">Fertilizer Due</span></td>
+              <td>Fertilizer</td>
+            </tr>
+            <tr>
+              <td style="padding:8px">🍅 Tomatoes</td>
+              <td>200</td>
+              <td>2.1</td>
+              <td><span class="badge danger">Pest Alert</span></td>
+              <td>Spraying</td>
+            </tr>
+          </tbody>
+        </table>
+      </section>
+    </div>
+  </main>
+</div>
+
+<!-- Floating Actions -->
+<div class="footer-actions">
+  <button class="fab"><i class="ri-equalizer-line"></i></button>
+  <button class="fab" style="background:#22c55e"><i class="ri-question-line"></i></button>
+</div>
+
+<!-- Scripts -->
+<script src="assets/script.js"></script>
+<script>
+window.addEventListener('DOMContentLoaded', () => {
+  /* Yield chart */
+  const yieldCtx = document.getElementById('yieldChart').getContext('2d');
+  new Chart(yieldCtx, {
+    type:'line',
+    data:{
+      labels:['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug'],
+      datasets:[
+        {label:'Maize', data:[3,3.2,3.4,3.5,3.6,3.4,3.2,3.3], borderColor:'#4f46e5', backgroundColor:'rgba(79,70,229,0.08)', fill:true, tension:.3},
+        {label:'Cassava', data:[2.5,2.6,2.7,2.8,2.9,3,2.8,2.7], borderColor:'#22c55e', backgroundColor:'rgba(34,197,94,0.06)', fill:true, tension:.3}
+      ]
+    },
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'bottom'}}}
+  });
+
+  /* Pests & Diseases chart */
+  const pestCtx = document.getElementById('pestChart').getContext('2d');
+  new Chart(pestCtx, {
+    type:'bar',
+    data:{
+      labels:['Maize','Cassava','Tomatoes','Mango'],
+      datasets:[
+        {label:'Pest Reports', data:[5,3,8,2], backgroundColor:'#f87171'},
+        {label:'Disease Cases', data:[2,1,4,1], backgroundColor:'#fbbf24'}
+      ]
+    },
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'bottom'}}}
+  });
+});
+</script>
+</body>
+</html>

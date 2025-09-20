@@ -1,0 +1,607 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>AgroVision — Farm Dashboard (Enhanced)</title>
+
+<!-- Fonts & Icons (same as yours) -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://cdn.jsdelivr.net/npm/remixicon@4.3.0/fonts/remixicon.css" rel="stylesheet"/>
+
+<!-- Leaflet Map (same) -->
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+<!-- Chart.js (same) -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
+
+<style>
+  /* --- kept your original variables and added pro polish --- */
+  :root{
+    --bg:#f7f8fc;
+    --card:#ffffff;
+    --muted:#6b7280;
+    --text:#0f172a;
+    --brand:#4f46e5;
+    --brand-2:#22c55e;
+    --ring:#e5e7eb;
+    --glass: rgba(255,255,255,0.6);
+    --card-shadow: 0 6px 18px rgba(15,23,42,0.06);
+  }
+  .dark {
+    --bg:#071126;
+    --card:#0b1430;
+    --muted:#9ca7b8;
+    --text:#e6eef8;
+    --brand:#7c8cff;
+    --brand-2:#34d399;
+    --ring:#122033;
+    --card-shadow: 0 8px 28px rgba(2,6,23,0.6);
+  }
+
+  *{box-sizing:border-box}
+  html,body{height:100%}
+  body{
+    margin:0; font-family:Inter,system-ui,Arial,Helvetica,sans-serif;
+    color:var(--text); background:var(--bg); -webkit-font-smoothing:antialiased;
+    transition: background .25s ease, color .25s ease;
+  }
+
+  /* Keep your layout exactly */
+  .layout{display:grid; grid-template-columns:260px 1fr; min-height:100vh}
+
+  /* Sidebar (preserve content + style improvements) */
+  .sidebar{
+    background:#1f2937; color:#cbd5e1; padding:16px 12px; position:sticky; top:0; height:100vh;
+    display:flex; flex-direction:column; justify-content:flex-start;
+  }
+  .brand{display:flex; align-items:center; gap:10px; color:#fff; font-weight:700; font-size:20px; padding:12px}
+  .brand i{font-size:22px;color:#22c55e}
+  .nav h4{font-size:12px; letter-spacing:.08em; color:#94a3b8; margin:20px 10px 8px}
+  .nav a{
+    display:flex; align-items:center; gap:10px; padding:10px 12px; margin:4px 6px; border-radius:10px; color:#e5e7eb; text-decoration:none;
+    transition: all .18s ease;
+  }
+  .nav a:hover{ transform: translateX(6px); background:#111827; color:#fff }
+  .nav a.active{background:linear-gradient(90deg,#0b1220,#111827); color:#fff; box-shadow:var(--card-shadow) }
+  .nav a i{font-size:18px; color:#94a3b8}
+
+  /* Sidebar footer weather (ADDED) */
+  .sidebar .sidebar-footer{ margin-top:auto; padding:12px; font-size:13px; color:#cbd5e1; border-top:1px solid rgba(255,255,255,0.03) }
+  .sidebar .sidebar-footer .wrow{display:flex;align-items:center;gap:8px; justify-content:space-between}
+
+  /* Topbar (unchanged structure - enhanced visuals) */
+  .topbar{
+    display:flex; align-items:center; justify-content:space-between; padding:14px 20px; background:var(--card);
+    border-bottom:1px solid var(--ring); position:sticky; top:0; z-index:5;
+    box-shadow: var(--card-shadow);
+  }
+  .search{display:flex; align-items:center; gap:8px; background:#f3f4f6; padding:10px 12px; border-radius:10px; width:420px}
+  .search input{border:0; background:transparent; outline:none; width:100%}
+  .top-actions{display:flex; align-items:center; gap:10px}
+  .btn{display:inline-flex; align-items:center; gap:8px; border:1px solid var(--ring); background:var(--card); padding:9px 12px; border-radius:10px; cursor:pointer; transition:all .18s}
+  .btn:hover{ transform:translateY(-3px) }
+  .btn.primary{ background:var(--brand); color:white; border-color:transparent }
+  .avatar{display:flex; align-items:center; gap:10px; padding:6px 10px; border-radius:12px; border:1px solid var(--ring); background:var(--card)}
+  .avatar img{width:30px;height:30px;border-radius:50%}
+
+  /* Content + cards */
+  .content{padding:22px}
+  .page-title{font-weight:700; font-size:20px}
+  .subtitle{color:var(--muted); font-size:14px}
+  .grid{display:grid; gap:16px}
+  .grid.metrics{grid-template-columns:repeat(4,minmax(0,1fr))}
+  .card{
+    background:var(--card); border:1px solid var(--ring); border-radius:16px; padding:16px;
+    box-shadow: var(--card-shadow); transition: transform .18s ease, box-shadow .18s;
+  }
+  .card:hover{ transform: translateY(-6px); box-shadow: 0 14px 40px rgba(2,6,23,0.08) }
+  .metric{
+    display:grid; grid-template-columns:1fr auto; gap:8px; align-items:center;
+  }
+  .metric h3{margin:6px 0 2px; font-size:26px}
+  .metric small{color:var(--muted)}
+  .metric .up{color:#16a34a; font-weight:600}
+  .metric .down{color:#dc2626; font-weight:600}
+  .metric .icon{
+    width:44px;height:44px;border-radius:12px;background:#eef2ff;color:var(--brand);
+    display:flex;align-items:center;justify-content:center;font-size:20px; transition: transform .15s;
+  }
+  .metric .icon:hover{ transform:scale(1.06) }
+  .split{display:grid; grid-template-columns:2fr 1fr; gap:16px}
+  .card h4{margin:2px 0 14px}
+  .kpis{display:grid; grid-template-columns:repeat(4,1fr); text-align:center; border-top:1px dashed var(--ring); padding-top:12px; margin-top:8px}
+  .kpis div b{display:block; font-size:18px}
+  .kpis div span{color:var(--muted); font-size:12px}
+  .filters{display:flex; gap:8px; margin-bottom:10px}
+  .pill{border:1px solid var(--ring); background:var(--card); padding:6px 10px; border-radius:999px; cursor:pointer; font-size:12px; transition:all .12s}
+  .pill.active{background:#eef2ff; border-color:#c7d2fe; color:#3730a3}
+  .pill:hover{ transform: translateY(-2px) }
+  .map-wrap{height:360px; border-radius:14px; overflow:hidden; border:1px solid var(--ring)}
+  .footer-actions{position:fixed; right:20px; bottom:20px; display:flex; gap:10px}
+  .fab{width:44px;height:44px;border-radius:999px;background:var(--brand);color:#fff;border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;box-shadow:0 10px 30px rgba(79,70,229,.35)}
+  .theme-toggle { display:inline-flex; align-items:center; gap:8px; padding:8px 12px; border-radius:10px; cursor:pointer; border:1px solid var(--ring); background:var(--card) }
+  .small-muted{ font-size:13px; color:var(--muted) }
+
+  /* small responsive tweaks (keeps original breakpoints) */
+  @media (max-width:1100px){
+    .grid.metrics{grid-template-columns:repeat(2,1fr)}
+    .split{grid-template-columns:1fr}
+    .search{width:100%}
+    .layout{ grid-template-columns: 1fr }
+    .sidebar{ position:relative; height:auto }
+  }
+</style>
+</head>
+<body>
+<div class="layout">
+  <!-- Sidebar (exact structure preserved; brand name changed in your last paste to AgroLink so preserved) -->
+  <aside class="sidebar">
+    <div>
+      <div class="brand"><i class="ri-plant-line"></i> AgroLink</div>
+      <nav class="nav">
+        <h4>MENU</h4>
+        <a href="#" class="active"><i class="ri-dashboard-line"></i> Dashboard</a>
+        <a href="#"><i class="ri-seedling-line"></i> Crops</a>
+        <a href="#"><i class="ri-medicine-bottle-line"></i> Livestock</a>
+        <a href="#"><i class="ri-map-pin-line"></i> Fields</a>
+        <a href="#"><i class="ri-cloud-windy-line"></i> Weather</a>
+        <a href="#"><i class="ri-tools-line"></i> Equipment</a>
+        <a href="#"><i class="ri-money-dollar-box-line"></i> Finance</a>
+        <a href="#"><i class="ri-bar-chart-2-line"></i> Reports</a>
+        <a href="#"><i class="ri-settings-3-line"></i> Settings</a>
+      </nav>
+    </div>
+
+    <!-- SIDEBAR WEATHER WIDGET (ADDED; does not remove anything) -->
+    <div class="sidebar-footer" aria-hidden="false">
+      <div class="small-muted" style="margin-bottom:6px; font-weight:600">Local Weather</div>
+      <div class="wrow">
+        <div id="sidebarWeatherMain" style="display:flex; flex-direction:column; gap:4px;">
+          <div id="sidebarWeatherSummary" class="small-muted">Loading...</div>
+          <div id="sidebarWeatherTemp" style="font-weight:600"></div>
+        </div>
+        <div id="sidebarWeatherIcon" style="font-size:18px; opacity:.95"></div>
+      </div>
+      <div style="margin-top:8px; font-size:12px; color:rgba(255,255,255,0.6)">Updated: <span id="sidebarWeatherUpdated">—</span></div>
+    </div>
+  </aside>
+
+  <!-- Main -->
+  <main>
+    <!-- Topbar (structure preserved) -->
+    <div class="topbar">
+      <div class="search"><i class="ri-search-line"></i><input placeholder="Search fields, crops, tasks..." /></div>
+      <div class="top-actions">
+        <button class="btn"><i class="ri-calendar-line"></i><span id="rangeLabel">01 Jan, 2025 to 31 Jan, 2025</span></button>
+
+        <!-- EXPORT CSV BUTTON (ADDED next to Add Record; original Add Record kept) -->
+        <button id="exportCsvBtn" class="btn" title="Export KPI CSV"><i class="ri-file-download-line"></i> Export CSV</button>
+
+        <button class="btn"><i class="ri-add-circle-line"></i> Add Record</button>
+        <button id="themeToggle" class="theme-toggle" title="Toggle theme"><i class="ri-contrast-2-line"></i> Theme</button>
+        <div class="avatar">
+          <img src="https://i.pravatar.cc/60?img=13" alt="">
+          <div>
+            <div style="font-weight:600">Oluwasegun Oyebode</div>
+            <small class="subtitle">Farm Director</small>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="content">
+      <div style="display:flex;justify-content:space-between;align-items:flex-end;gap:14px;flex-wrap:wrap">
+        <div>
+          <div class="page-title">Good Morning, Oluwasegun!</div>
+          <div class="subtitle">Here’s what’s happening across your farms today.</div>
+        </div>
+      </div>
+
+      <!-- Metrics (preserved exactly; enhancements applied via JS/CSS) -->
+      <section class="grid metrics" style="margin-top:16px">
+        <div class="card">
+          <div class="metric">
+            <div>
+              <small>Total Revenue</small>
+              <h3 id="mRevenue">$559.25k</h3>
+              <small class="up">▲ +16.24%</small>
+            </div>
+            <div class="icon"><i class="ri-money-dollar-circle-line"></i></div>
+          </div>
+          <a class="subtitle" href="#" style="text-decoration:none">View breakdown</a>
+        </div>
+
+        <div class="card">
+          <div class="metric">
+            <div>
+              <small>Total Harvest</small>
+              <h3 id="mHarvest">36,894 t</h3>
+              <small class="down">▼ −3.57%</small>
+            </div>
+            <div class="icon" style="background:#ecfeff;color:#0891b2"><i class="ri-scales-2-line"></i></div>
+          </div>
+          <a class="subtitle" href="#" style="text-decoration:none">See crop details</a>
+        </div>
+
+        <div class="card">
+          <div class="metric">
+            <div>
+              <small>Active Fields</small>
+              <h3 id="mFields">183</h3>
+              <small class="up">▲ +29.08%</small>
+            </div>
+            <div class="icon" style="background:#ecfdf5;color:#16a34a"><i class="ri-leaf-line"></i></div>
+          </div>
+          <a class="subtitle" href="#" style="text-decoration:none">Field status</a>
+        </div>
+
+        <div class="card">
+          <div class="metric">
+            <div>
+              <small>Farm Balance</small>
+              <h3 id="mBalance">$165.89k</h3>
+              <small class="">• +0.00%</small>
+            </div>
+            <div class="icon" style="background:#fff7ed;color:#f97316"><i class="ri-bank-card-line"></i></div>
+          </div>
+          <a class="subtitle" href="#" style="text-decoration:none">Withdraw / Transfer</a>
+        </div>
+      </section>
+
+      <!-- Revenue + Map (preserved exactly) -->
+      <section class="split" style="margin-top:16px">
+        <div class="card">
+          <div style="display:flex;justify-content:space-between;align-items:center;gap:10px">
+            <h4>Production & Revenue</h4>
+            <div class="filters" id="filters">
+              <button data-range="ALL" class="pill active">ALL</button>
+              <button data-range="1M" class="pill">1M</button>
+              <button data-range="6M" class="pill">6M</button>
+              <button data-range="1Y" class="pill">1Y</button>
+            </div>
+          </div>
+          <canvas id="revenueChart" height="160"></canvas>
+          <div class="kpis">
+            <div><b id="kpiShipments">7,585</b><span>Shipments</span></div>
+            <div><b id="kpiRevenue">$22.89k</b><span>Revenue</span></div>
+            <div><b id="kpiWastage">367</b><span>Wastage (t)</span></div>
+            <div><b id="kpiYield">18.92%</b><span>Yield Efficiency</span></div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div style="display:flex;justify-content:space-between;align-items:center;gap:10px">
+            <h4>Production by Locations</h4>
+            <button class="btn">Export Report</button>
+          </div>
+          <div id="map" class="map-wrap" aria-label="Farm locations map"></div>
+        </div>
+      </section>
+
+      <!-- NEW: AI Insights + Tasks (ADDED below without removing anything) -->
+      <section style="margin-top:16px; display:grid; grid-template-columns:2fr 1fr; gap:16px">
+        <div class="card">
+          <h4>AI Insights</h4>
+          <ul style="margin-top:8px; color:var(--muted); line-height:1.6">
+            <li>🌱 <strong>Kaduna:</strong> Irrigation efficiency down 5% — schedule watering within 24h.</li>
+            <li>🌾 <strong>Oyo:</strong> Soil nutrient levels optimal — predicted yield +12% this season.</li>
+            <li>☀️ <strong>Nairobi Dairy:</strong> Temperature spikes expected — increase shade/cooling.</li>
+          </ul>
+        </div>
+
+        <div class="card">
+          <h4>Operations Tasks</h4>
+          <ul id="opTasks" style="margin-top:8px; color:var(--muted); line-height:1.6">
+            <li>🔧 Repair harvester belt — <small>Due: Fri</small></li>
+            <li>💧 Irrigate Field 3 (Maize) — <small>Due: Today 16:00</small></li>
+            <li>🧪 Soil sample Field 7 — <small>Due: Mon</small></li>
+          </ul>
+          <div style="margin-top:10px; display:flex; gap:8px">
+            <button id="addOpTask" class="btn">Add Task</button>
+            <button id="downloadTasks" class="btn">Export Tasks</button>
+          </div>
+        </div>
+      </section>
+    </div>
+  </main>
+</div>
+
+<!-- Floating actions (preserved) -->
+<div class="footer-actions" aria-hidden>
+  <button class="fab" title="Settings"><i class="ri-equalizer-line"></i></button>
+  <button class="fab" title="Help" style="background:#22c55e"><i class="ri-question-line"></i></button>
+</div>
+
+<script>
+/* -------------------------
+   Original demo data preserved
+   ------------------------- */
+const datasetByRange = {
+  ALL: { labels: ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'],
+    harvest:[120,140,135,150,180,200,210,205,198,190,175,160],
+    revenue:[20,22,24,26,28,30,32,33,31,29,26,24] },
+  '1M': { labels:['Week 1','Week 2','Week 3','Week 4'], harvest:[40,46,42,50], revenue:[7,8,7.5,9] },
+  '6M': { labels:['Feb','Mar','Apr','May','Jun','Jul'], harvest:[140,135,150,180,200,210], revenue:[22,24,26,28,30,32] },
+  '1Y': { labels:['Q1','Q2','Q3','Q4'], harvest:[395,540,618,525], revenue:[66,84,96,79] },
+};
+
+/* --------------------------------------
+   Helper: last item
+   ------------------------------------- */
+function last(arr){ return arr[arr.length - 1]; }
+
+/* --------------------------------------
+   Animate number (re-usable)
+   - Element id or element reference
+   - start -> end (numbers)
+   - formatFn to render value
+   ------------------------------------- */
+function animateValue(el, start, end, duration = 700, formatFn = v => Math.round(v)){
+  const elem = typeof el === 'string' ? document.getElementById(el) : el;
+  const startTime = performance.now();
+  const from = Number(start) || 0;
+  const to = Number(end) || 0;
+  function step(now){
+    const t = Math.min(1, (now - startTime) / duration);
+    const eased = 1 - Math.pow(1 - t, 3); // easeOutCubic
+    const val = from + (to - from) * eased;
+    elem.textContent = formatFn(val);
+    if(t < 1) requestAnimationFrame(step);
+  }
+  requestAnimationFrame(step);
+}
+
+/* --------------------------------------
+   Parsing helpers to retain original display formats
+   (so we don't remove or drastically change what you wrote)
+   ------------------------------------- */
+function detectUnitAndNumber(str){
+  if(!str) return {num:0, unit:''};
+  const s = String(str).trim();
+  const hasK = /k$/i.test(s);
+  const hasT = /t\b/i.test(s);
+  const raw = Number(s.replace(/[^0-9.\-]/g,''));
+  return { num: raw, unit: hasK ? 'k' : (hasT ? 't' : '') };
+}
+
+/* --------------------------------------
+   CHARTS: create revenueChart with nicer animation & gradient
+   ------------------------------------- */
+const ctx = document.getElementById('revenueChart').getContext('2d');
+
+/* create gradients for nicer fill (keeps dataset arrays identical) */
+const g1 = ctx.createLinearGradient(0,0,0,220);
+g1.addColorStop(0, 'rgba(79,70,229,0.20)');
+g1.addColorStop(1, 'rgba(79,70,229,0.02)');
+const g2 = ctx.createLinearGradient(0,0,0,220);
+g2.addColorStop(0, 'rgba(34,197,94,0.14)');
+g2.addColorStop(1, 'rgba(34,197,94,0.02)');
+
+const chart = new Chart(ctx, {
+  type:'line',
+  data:{
+    labels: datasetByRange.ALL.labels,
+    datasets:[
+      { label:'Harvest (t)', data: datasetByRange.ALL.harvest, tension:.35, borderWidth:2, backgroundColor: g1, borderColor: 'rgb(79,70,229)', fill:true, pointRadius:3 },
+      { label:'Revenue ($k)', data: datasetByRange.ALL.revenue, tension:.35, borderWidth:2, borderDash:[6,6], backgroundColor: g2, borderColor: 'rgb(34,197,94)', fill:true, pointRadius:3 }
+    ]
+  },
+  options:{
+    responsive:true,
+    maintainAspectRatio:false,
+    animation: { duration: 900, easing: 'easeOutCubic' },
+    scales:{
+      y:{ grid:{color:'#eef2ff'} },
+      x:{ grid:{display:false} }
+    },
+    plugins:{ legend:{position:'bottom', labels:{usePointStyle:true}} }
+  }
+});
+
+/* --------------------------------------
+   KPI update function (same name and behavior preserved)
+   includes animated counters for the four top cards
+   ------------------------------------- */
+function updateKPIs(range){
+  const ds = datasetByRange[range];
+  const lastH = last(ds.harvest);
+  const lastR = last(ds.revenue);
+  // Shipments ~ arbitrary derivation for demo
+  const shipments = Math.round(lastH * 36);
+  const revenueVal = Math.round(lastR * 1000);
+  const wastage = Math.round(lastH * 0.12);
+  const yieldEff = 80 + (lastH % 20); // demo formula
+
+  // Existing KPI elements animate (we keep their IDs)
+  animateValue('kpiShipments', Number(document.getElementById('kpiShipments').textContent.replace(/,/g,'')), shipments, 700, v => Math.round(v).toLocaleString());
+  animateValue('kpiRevenue', Number(document.getElementById('kpiRevenue').textContent.replace(/[^0-9.-]+/g,'')), revenueVal, 700, v => '$' + Math.round(v).toLocaleString());
+  animateValue('kpiWastage', Number(document.getElementById('kpiWastage').textContent.replace(/,/g,'')), wastage, 700, v => Math.round(v).toLocaleString());
+  animateValue('kpiYield', Number(document.getElementById('kpiYield').textContent.replace('%','')), yieldEff, 700, v => (Math.round(v*100)/100) + '%');
+
+  // Animate top summary metrics while keeping their displayed formats
+  // mHarvest: "36,894 t" -> animate integer
+  const harvestInfo = detectUnitAndNumber(document.getElementById('mHarvest').textContent);
+  if(harvestInfo.unit === 't'){
+    animateValue('mHarvest', 0, harvestInfo.num, 900, v => Math.round(v).toLocaleString() + ' t');
+  } else {
+    animateValue('mHarvest', 0, harvestInfo.num, 900, v => Math.round(v).toLocaleString());
+  }
+
+  // mRevenue: "$559.25k" -> animate the numeric (in k) and keep suffix
+  const revInfo = detectUnitAndNumber(document.getElementById('mRevenue').textContent);
+  if(/k/i.test(String(document.getElementById('mRevenue').textContent))){
+    animateValue('mRevenue', 0, revInfo.num, 900, v => '$' + Number(v).toFixed(2) + 'k');
+  } else {
+    animateValue('mRevenue', 0, revInfo.num, 900, v => '$' + Math.round(v).toLocaleString());
+  }
+
+  // Active fields
+  const fieldsInfo = detectUnitAndNumber(document.getElementById('mFields').textContent);
+  animateValue('mFields', 0, fieldsInfo.num, 900, v => Math.round(v).toLocaleString());
+
+  // Farm Balance (preserve k)
+  const balInfo = detectUnitAndNumber(document.getElementById('mBalance').textContent);
+  if(/k/i.test(String(document.getElementById('mBalance').textContent))){
+    animateValue('mBalance', 0, balInfo.num, 900, v => '$' + Number(v).toFixed(2) + 'k');
+  } else {
+    animateValue('mBalance', 0, balInfo.num, 900, v => '$' + Math.round(v).toLocaleString());
+  }
+}
+
+/* initialize KPIs for ALL (keeps your original initializations but now animated) */
+(function initKPIs(){
+  const initRange = 'ALL';
+  const lastH = last(datasetByRange[initRange].harvest);
+  const lastR = last(datasetByRange[initRange].revenue);
+  document.getElementById('kpiShipments').textContent = Math.round(lastH * 36).toLocaleString();
+  document.getElementById('kpiRevenue').textContent = '$' + Math.round(lastR * 1000).toLocaleString();
+  document.getElementById('kpiWastage').textContent = Math.round(lastH * 0.12).toLocaleString();
+  document.getElementById('kpiYield').textContent = (80 + (lastH % 20)).toFixed(2) + '%';
+
+  // Animate top cards (new enhancement)
+  updateKPIs(initRange);
+})();
+
+/* ---------- Filters behaviour (preserved + accessible) ---------- */
+document.getElementById('filters').addEventListener('click', (e)=>{
+  if(e.target.matches('.pill')){
+    document.querySelectorAll('.pill').forEach(b=>b.classList.remove('active'));
+    e.target.classList.add('active');
+    const r = e.target.dataset.range;
+    chart.data.labels = datasetByRange[r].labels;
+    chart.data.datasets[0].data = datasetByRange[r].harvest;
+    chart.data.datasets[1].data = datasetByRange[r].revenue;
+    chart.update();
+    updateKPIs(r);
+  }
+});
+
+/* ---------- Date range label (unchanged logic) ---------- */
+const rangeLabel = document.getElementById('rangeLabel');
+const start = new Date(new Date().getFullYear(), 0, 1);
+const end = new Date(new Date().getFullYear(), 0, 31);
+rangeLabel.textContent = start.toLocaleDateString(undefined,{day:'2-digit',month:'short',year:'numeric'})+
+  ' to ' + end.toLocaleDateString(undefined,{day:'2-digit',month:'short',year:'numeric'});
+
+/* ---------- Leaflet Map with sample farm pins (preserved) ---------- */
+const map = L.map('map', {zoomControl:true}).setView([9.0820, 8.6753], 4);
+L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+  attribution: '&copy; OpenStreetMap'
+}).addTo(map);
+
+const farms = [
+  {name:'Kaduna Maize', coords:[10.52,7.44], output:'1,250 t'},
+  {name:'Oyo Cassava', coords:[8.15,3.35], output:'980 t'},
+  {name:'Kano Tomatoes', coords:[12.00,8.52], output:'650 t'},
+  {name:'Accra Vegetables', coords:[5.56,-0.20], output:'420 t'},
+  {name:'Nairobi Dairy', coords:[-1.29,36.82], output:'1,100 L/day'},
+];
+farms.forEach(f=>{
+  L.circleMarker(f.coords,{radius:8,weight:2,color:'#4f46e5',fillColor:'#a5b4fc',fillOpacity:.8})
+    .addTo(map).bindPopup(`<b>${f.name}</b><br>Output: ${f.output}`);
+});
+
+/* ---------- Theme toggle (preserved) ---------- */
+const THEME_KEY = 'agro-theme';
+function applySavedTheme(){
+  const saved = localStorage.getItem(THEME_KEY);
+  if(saved === 'dark') document.documentElement.classList.add('dark');
+  else if(saved === 'light') document.documentElement.classList.remove('dark');
+  else {
+    if(window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches){
+      document.documentElement.classList.add('dark');
+    }
+  }
+}
+applySavedTheme();
+document.getElementById('themeToggle').addEventListener('click', ()=>{
+  const isDark = document.documentElement.classList.toggle('dark');
+  localStorage.setItem(THEME_KEY, isDark ? 'dark' : 'light');
+});
+
+/* ---------- Accessibility: keyboard support for pills (preserved) ---------- */
+document.querySelectorAll('.pill').forEach(btn=>{
+  btn.setAttribute('tabindex','0');
+  btn.addEventListener('keydown', (e)=>{
+    if(e.key === 'Enter' || e.key === ' ') { e.preventDefault(); btn.click(); }
+  });
+});
+
+/* -------------------------------------------
+   ENHANCEMENTS ADDED (non-destructive)
+   - Export CSV
+   - Sidebar weather fetch
+   - Export tasks
+   - Add operation task button
+   ------------------------------------------- */
+
+/* Export KPI CSV (hooked to exportCsvBtn, added in topbar) */
+document.getElementById('exportCsvBtn').addEventListener('click', function(){
+  const rows = [
+    ['Metric','Value'],
+    ['Total Revenue', document.getElementById('mRevenue').textContent],
+    ['Total Harvest', document.getElementById('mHarvest').textContent],
+    ['Active Fields', document.getElementById('mFields').textContent],
+    ['Farm Balance', document.getElementById('mBalance').textContent],
+  ];
+  const csv = rows.map(r => r.join(',')).join('\n');
+  const blob = new Blob([csv], { type: 'text/csv' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'agro_kpis.csv';
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+});
+
+/* Sidebar weather widget (uses Open-Meteo — no API key required) */
+async function updateSidebarWeather(){
+  try {
+    const lat = 9.0820, lon = 8.6753; // central farm region — change as needed
+    const res = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current_weather=true`);
+    const json = await res.json();
+    if(json && json.current_weather){
+      const cw = json.current_weather;
+      document.getElementById('sidebarWeatherSummary').textContent = `Temp: ${cw.temperature}°C • ${cw.weathercode || ''}`;
+      document.getElementById('sidebarWeatherTemp').textContent = `${cw.temperature}°C`;
+      document.getElementById('sidebarWeatherIcon').textContent = '🌤';
+      document.getElementById('sidebarWeatherUpdated').textContent = new Date().toLocaleTimeString();
+    } else {
+      document.getElementById('sidebarWeatherSummary').textContent = 'Weather data unavailable';
+      document.getElementById('sidebarWeatherTemp').textContent = '';
+      document.getElementById('sidebarWeatherIcon').textContent = '';
+    }
+  } catch (err) {
+    document.getElementById('sidebarWeatherSummary').textContent = 'Weather unavailable';
+    document.getElementById('sidebarWeatherTemp').textContent = '';
+    document.getElementById('sidebarWeatherIcon').textContent = '';
+  }
+}
+updateSidebarWeather();
+
+/* Tasks export + add task (non-destructive) */
+document.getElementById('addOpTask').addEventListener('click', ()=>{
+  const ul = document.getElementById('opTasks');
+  const li = document.createElement('li');
+  const now = new Date();
+  li.textContent = `📝 Quick Task added — ${now.toLocaleString()}`;
+  ul.prepend(li);
+});
+document.getElementById('downloadTasks').addEventListener('click', ()=>{
+  const list = Array.from(document.querySelectorAll('#opTasks li')).map(li => li.textContent);
+  const csv = ['Task'].concat(list).map(r => `"${r.replace(/"/g,'""')}"`).join('\n');
+  const blob = new Blob([csv], { type: 'text/csv' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'agro_tasks.csv';
+  document.body.appendChild(a); a.click(); a.remove();
+});
+
+/* End of enhancements (all original content preserved and untouched structurally) */
+</script>
+</body>
+</html>

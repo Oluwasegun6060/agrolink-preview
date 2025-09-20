@@ -1,0 +1,317 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>AgroLink — Fields</title>
+
+<!-- Fonts & Icons -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://cdn.jsdelivr.net/npm/remixicon@4.3.0/fonts/remixicon.css" rel="stylesheet"/>
+
+<!-- Styles -->
+<link rel="stylesheet" href="assets/style.css" />
+<style>
+  .chart-fixed { height: 240px; }
+  .metric .kpi { font-size: 24px; font-weight: 700; }
+  .muted { color: var(--muted-foreground, #6b7280); }
+  .pill { padding: 6px 10px; border-radius: 999px; font-weight: 600; font-size: 12px; }
+  .pill.ok { background:#dcfce7; color:#166534; }
+  .pill.warn { background:#fef9c3; color:#92400e; }
+  .pill.bad { background:#fee2e2; color:#b91c1c; }
+  .grid.metrics { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+  @media (max-width: 1100px) { .grid.metrics { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+  @media (max-width: 640px) { .grid.metrics { grid-template-columns: 1fr; } }
+  .field-map { background:#f9fafb; border-radius:12px; height:260px; display:grid; grid-template-columns:repeat(6,1fr); gap:6px; padding:8px; }
+  .plot { border-radius:6px; display:flex; align-items:center; justify-content:center; font-size:12px; font-weight:600; color:#fff; cursor:pointer; transition:transform .2s; }
+  .plot:hover { transform:scale(1.05); }
+  .plot.healthy { background:#16a34a; }
+  .plot.irrigate { background:#2563eb; }
+  .plot.maintenance { background:#f97316; }
+  .plot.issue { background:#dc2626; }
+
+  /* Popup modal */
+  .modal { position:fixed; top:0; left:0; width:100%; height:100%; display:none; align-items:center; justify-content:center; background:rgba(0,0,0,.5); }
+  .modal-content { background:#fff; border-radius:12px; padding:20px; max-width:400px; width:90%; }
+  .modal-content h4 { margin-bottom:10px; }
+  .modal-content button { margin-top:10px; }
+</style>
+
+<!-- Chart.js -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
+</head>
+<body>
+<div class="layout">
+  <!-- Sidebar -->
+  <aside class="sidebar">
+    <div class="brand"><i class="ri-plant-line"></i> AgroLink</div>
+    <nav class="nav">
+      <h4>MENU</h4>
+      <a href="index.html"><i class="ri-dashboard-line"></i> Dashboard</a>
+      <a href="crops.html"><i class="ri-seedling-line"></i> Crops</a>
+      <a href="livestock.html"><i class="ri-medicine-bottle-line"></i> Livestock</a>
+      <a href="fields.html" class="active"><i class="ri-map-pin-line"></i> Fields</a>
+      <a href="weather.html"><i class="ri-cloud-windy-line"></i> Weather</a>
+      <a href="equipment.html"><i class="ri-tools-line"></i> Equipment</a>
+      <a href="finance.html"><i class="ri-money-dollar-box-line"></i> Finance</a>
+      <a href="reports.html"><i class="ri-bar-chart-2-line"></i> Reports</a>
+      <a href="settings.html"><i class="ri-settings-3-line"></i> Settings</a>
+    </nav>
+  </aside>
+
+  <!-- Main -->
+  <main>
+    <!-- Topbar -->
+    <div class="topbar">
+      <div class="search"><i class="ri-search-line"></i><input placeholder="Search fields, crops, irrigation..." /></div>
+      <div class="top-actions">
+        <button class="btn"><i class="ri-calendar-line"></i><span id="rangeLabel">Jan 2025</span></button>
+        <button id="addFieldBtn" class="btn btn-primary"><i class="ri-add-circle-line"></i> Add Field</button>
+        <button id="themeToggle" class="theme-toggle"><i class="ri-contrast-2-line"></i> Theme</button>
+        <div class="avatar">
+          <img src="https://i.pravatar.cc/60?img=22" alt="">
+          <div>
+            <div style="font-weight:600">Oluwasegun Oyebode</div>
+            <small class="subtitle">Farm Director</small>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Content -->
+    <div class="content">
+      <!-- Header -->
+      <div style="display:flex;justify-content:space-between;align-items:flex-end;flex-wrap:wrap;gap:14px">
+        <div>
+          <div class="page-title">Fields & Land Management Hub</div>
+          <div class="subtitle">Overview of field usage, irrigation, soil health, and crop rotation plans.</div>
+        </div>
+        <div style="display:flex;gap:8px">
+          <button class="btn btn-primary"><i class="ri-inbox-unarchive-line"></i> Export</button>
+          <button class="btn"><i class="ri-equalizer-line"></i> Filters</button>
+        </div>
+      </div>
+
+      <!-- KPIs -->
+      <section class="grid metrics" style="margin-top:16px">
+        <div class="card">
+          <div class="metric">
+            <div>
+              <small>Total Fields</small>
+              <div class="kpi" id="totalFields">12</div>
+              <small class="up">▲ +1 added</small>
+            </div>
+            <div class="icon" style="background:#ecfdf5;color:#16a34a"><i class="ri-map-pin-line"></i></div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="metric">
+            <div>
+              <small>Irrigation Efficiency</small>
+              <div class="kpi" id="irrigationEff">89%</div>
+              <small class="muted">Last week 85%</small>
+            </div>
+            <div class="icon" style="background:#eff6ff;color:#2563eb"><i class="ri-drop-line"></i></div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="metric">
+            <div>
+              <small>Fertility Index</small>
+              <div class="kpi" id="fertilityIndex">78%</div>
+              <small class="muted">Needs soil boost soon</small>
+            </div>
+            <div class="icon" style="background:#fff7ed;color:#f97316"><i class="ri-flask-line"></i></div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="metric">
+            <div>
+              <small>Active Crops</small>
+              <div class="kpi" id="activeCrops">8</div>
+              <small class="pill ok">Rotations On Track</small>
+            </div>
+            <div class="icon" style="background:#ecfeff;color:#0891b2"><i class="ri-seedling-line"></i></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Field Map -->
+      <section class="card" style="margin-top:16px">
+        <h4>Interactive Field Map</h4>
+        <div class="field-map">
+          <div class="plot healthy">F1</div>
+          <div class="plot healthy">F2</div>
+          <div class="plot irrigate">F3</div>
+          <div class="plot healthy">F4</div>
+          <div class="plot maintenance">F5</div>
+          <div class="plot healthy">F6</div>
+          <div class="plot healthy">F7</div>
+          <div class="plot irrigate">F8</div>
+          <div class="plot issue">F9</div>
+          <div class="plot healthy">F10</div>
+          <div class="plot healthy">F11</div>
+          <div class="plot healthy">F12</div>
+        </div>
+        <small class="muted">Click a plot to view details</small>
+      </section>
+
+      <!-- Analytics -->
+      <section class="split" style="margin-top:16px">
+        <div class="card">
+          <h4>Soil Fertility Trend</h4>
+          <div class="chart-fixed"><canvas id="fertilityChart"></canvas></div>
+        </div>
+        <div class="card">
+          <h4>Irrigation Usage</h4>
+          <div class="chart-fixed"><canvas id="irrigationChart"></canvas></div>
+        </div>
+      </section>
+
+      <!-- Field Alerts -->
+      <section class="card" style="margin-top:16px">
+        <h4>Real-time Field Alerts</h4>
+        <ul id="fieldAlerts" style="margin-top:8px;display:grid;gap:8px;padding-left:18px;">
+          <li>💧 Field F3 irrigation pressure low — check pump.</li>
+          <li>🧪 Soil pH imbalance detected in Field F5.</li>
+          <li>🪲 Pest activity rising in Field F9.</li>
+        </ul>
+      </section>
+
+      <!-- Field Table -->
+      <section class="card" style="margin-top:16px">
+        <h4>Field Inventory</h4>
+        <div class="table-wrap">
+          <table id="fieldTable" style="width:100%;border-collapse:collapse;margin-top:10px;font-size:14px;">
+            <thead style="background:var(--muted);text-align:left">
+              <tr>
+                <th style="padding:8px">Field ID</th>
+                <th>Size (ha)</th>
+                <th>Current Crop</th>
+                <th>Soil Health</th>
+                <th>Irrigation</th>
+                <th>Next Action</th>
+                <th style="text-align:center">Action</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td style="padding:8px">F1</td>
+                <td>2.5</td>
+                <td>Maize</td>
+                <td><span class="pill ok">Good</span></td>
+                <td><span class="pill ok">Optimal</span></td>
+                <td>Fertilizer top-up</td>
+                <td style="text-align:center"><button class="btn btn-primary btn-sm">View</button></td>
+              </tr>
+              <tr>
+                <td style="padding:8px">F3</td>
+                <td>1.8</td>
+                <td>Tomatoes</td>
+                <td><span class="pill warn">Moderate</span></td>
+                <td><span class="pill warn">Low</span></td>
+                <td>Irrigation pump check</td>
+                <td style="text-align:center"><button class="btn btn-primary btn-sm">View</button></td>
+              </tr>
+              <tr>
+                <td style="padding:8px">F9</td>
+                <td>3.1</td>
+                <td>Rice</td>
+                <td><span class="pill bad">Poor</span></td>
+                <td><span class="pill ok">Optimal</span></td>
+                <td>Pest treatment</td>
+                <td style="text-align:center"><button class="btn btn-primary btn-sm">View</button></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+    </div>
+  </main>
+</div>
+
+<!-- Floating Actions -->
+<div class="footer-actions">
+  <button class="fab"><i class="ri-equalizer-line"></i></button>
+  <button class="fab" style="background:#22c55e"><i class="ri-question-line"></i></button>
+</div>
+
+<!-- Modal -->
+<div class="modal" id="fieldModal">
+  <div class="modal-content">
+    <h4 id="modalTitle">Field Info</h4>
+    <p id="modalBody">Details will appear here.</p>
+    <button onclick="document.getElementById('fieldModal').style.display='none'" class="btn">Close</button>
+  </div>
+</div>
+
+<!-- Scripts -->
+<script src="assets/script.js"></script>
+<script>
+// Field modal
+const modal = document.getElementById('fieldModal');
+const modalTitle = document.getElementById('modalTitle');
+const modalBody = document.getElementById('modalBody');
+document.querySelectorAll('.plot').forEach(plot=>{
+  plot.addEventListener('click',()=>{
+    modalTitle.textContent = "Details for " + plot.textContent;
+    modalBody.textContent = "Soil, irrigation, and crop info for " + plot.textContent + " will be shown here.";
+    modal.style.display = 'flex';
+  });
+});
+
+// Real-time alerts
+const fieldAlerts = document.getElementById('fieldAlerts');
+setInterval(()=>{
+  if(Math.random() < 0.4){
+    const messages = [
+      '💧 Irrigation completed for Field F2.',
+      '🪲 Drone scan: Pest level rising in Field F7.',
+      '🧪 Soil nutrient boost applied in Field F8.',
+      '🌱 Germination check passed in Field F1.',
+      '⚠️ Weather alert: Heavy rain expected near Field F5.'
+    ];
+    const li = document.createElement('li');
+    li.textContent = messages[Math.floor(Math.random()*messages.length)];
+    fieldAlerts.prepend(li);
+    while(fieldAlerts.children.length > 6) fieldAlerts.removeChild(fieldAlerts.lastChild);
+  }
+},5000);
+
+// Charts
+const fertilityCtx = document.getElementById('fertilityChart');
+new Chart(fertilityCtx, {
+  type:'line',
+  data:{ labels:['Wk1','Wk2','Wk3','Wk4','Wk5'], datasets:[{ label:'Fertility %', data:[75,77,78,80,78], borderColor:'#f97316', backgroundColor:'rgba(249,115,22,.1)', fill:true, tension:.3 }] },
+  options:{ responsive:true, maintainAspectRatio:false, plugins:{ legend:{ display:false } } }
+});
+
+const irrigationCtx = document.getElementById('irrigationChart');
+new Chart(irrigationCtx, {
+  type:'bar',
+  data:{ labels:['F1','F2','F3','F4','F5','F6'], datasets:[{ label:'Water Used (L)', data:[210,190,250,220,180,200], backgroundColor:'#2563eb' }] },
+  options:{ responsive:true, maintainAspectRatio:false, plugins:{ legend:{ display:false } }, scales:{ y:{ beginAtZero:true } } }
+});
+
+// Add Field
+document.getElementById('addFieldBtn').addEventListener('click',()=>{
+  const tbody = document.querySelector('#fieldTable tbody');
+  const id = 'F' + Math.floor(Math.random()*100+13);
+  const tr = document.createElement('tr');
+  tr.innerHTML = `
+    <td style="padding:8px">${id}</td>
+    <td>${(1+Math.random()*3).toFixed(1)}</td>
+    <td>New Crop</td>
+    <td><span class="pill ok">Good</span></td>
+    <td><span class="pill ok">Optimal</span></td>
+    <td>Soil check</td>
+    <td style="text-align:center"><button class="btn btn-primary btn-sm">View</button></td>
+  `;
+  tbody.prepend(tr);
+  document.getElementById('totalFields').textContent = parseInt(document.getElementById('totalFields').textContent)+1;
+});
+</script>
+</body>
+</html>

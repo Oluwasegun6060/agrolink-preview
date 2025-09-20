@@ -1,0 +1,612 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>AgroLink — Livestock</title>
+
+<!-- Fonts & Icons -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://cdn.jsdelivr.net/npm/remixicon@4.3.0/fonts/remixicon.css" rel="stylesheet"/>
+
+<!-- Styles -->
+<link rel="stylesheet" href="assets/style.css" />
+<style>
+  /* Page-local helpers (won't affect other pages) */
+  .chart-fixed { height: 240px; }
+  .metric .kpi { font-size: 24px; font-weight: 700; }
+  .muted { color: var(--muted-foreground, #6b7280); }
+  .pill { padding: 6px 10px; border-radius: 999px; font-weight: 600; font-size: 12px; }
+  .pill.ok { background:#dcfce7; color:#166534; }
+  .pill.warn { background:#fef9c3; color:#92400e; }
+  .pill.bad { background:#fee2e2; color:#b91c1c; }
+  .table-wrap { overflow-x:auto; }
+  .btn-sm { font-size:12px; padding:6px 10px; }
+  .grid.metrics { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+  @media (max-width: 1100px) { .grid.metrics { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+  @media (max-width: 640px) { .grid.metrics { grid-template-columns: 1fr; } }
+
+  /* Modal */
+  .modal-backdrop{ position:fixed; inset:0; background:rgba(2,6,23,0.45); display:none; align-items:center; justify-content:center; z-index:60; }
+  .modal{ background:var(--card); border-radius:12px; padding:18px; width:920px; max-width:95%; box-shadow:0 16px 40px rgba(2,6,23,0.4); }
+  .modal h4{ margin-top:0; }
+  .modal .row{ display:flex; gap:12px; align-items:center; flex-wrap:wrap; }
+  .modal .col{ flex:1; min-width:180px; }
+
+  /* Toast */
+  .toast-container{ position:fixed; right:20px; top:20px; z-index:80; display:flex; flex-direction:column; gap:8px; }
+  .toast{ background:var(--card); padding:10px 14px; border-radius:10px; box-shadow:0 8px 24px rgba(2,6,23,0.12); border:1px solid var(--ring); display:flex; gap:10px; align-items:center; min-width:220px; }
+
+  /* New small sections */
+  .panel-row{ display:grid; grid-template-columns: 2fr 1fr; gap:16px; margin-top:16px; }
+  @media (max-width:900px){ .panel-row{ grid-template-columns:1fr; } }
+  .recommendation{ background:var(--card); border:1px solid var(--ring); border-radius:12px; padding:12px; box-shadow:var(--card-shadow) }
+  .breeding-table th, .breeding-table td{ padding:8px; border-top:1px solid var(--ring); }
+  .export-btn{ margin-left:8px; }
+</style>
+
+<!-- Chart.js -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
+</head>
+<body>
+<div class="layout">
+  <!-- Sidebar -->
+  <aside class="sidebar">
+    <div class="brand"><i class="ri-plant-line"></i> AgroLink</div>
+    <nav class="nav">
+      <h4>MENU</h4>
+      <a href="index.html"><i class="ri-dashboard-line"></i> Dashboard</a>
+      <a href="crops.html"><i class="ri-seedling-line"></i> Crops</a>
+      <a href="livestock.html" class="active"><i class="ri-medicine-bottle-line"></i> Livestock</a>
+      <a href="fields.html"><i class="ri-map-pin-line"></i> Fields</a>
+      <a href="weather.html"><i class="ri-cloud-windy-line"></i> Weather</a>
+      <a href="equipment.html"><i class="ri-tools-line"></i> Equipment</a>
+      <a href="finance.html"><i class="ri-money-dollar-box-line"></i> Finance</a>
+      <a href="reports.html"><i class="ri-bar-chart-2-line"></i> Reports</a>
+      <a href="settings.html"><i class="ri-settings-3-line"></i> Settings</a>
+    </nav>
+  </aside>
+
+  <!-- Main -->
+  <main>
+    <!-- Topbar -->
+    <div class="topbar">
+      <div class="search"><i class="ri-search-line"></i><input placeholder="Search livestock, health, feed..." /></div>
+      <div class="top-actions">
+        <button class="btn"><i class="ri-calendar-line"></i><span id="rangeLabel">Jan 2025</span></button>
+        <button id="addAnimalBtn" class="btn btn-primary"><i class="ri-add-circle-line"></i> Add Animal</button>
+        <button id="themeToggle" class="theme-toggle"><i class="ri-contrast-2-line"></i> Theme</button>
+        <div class="avatar">
+          <img src="https://i.pravatar.cc/60?img=13" alt="">
+          <div>
+            <div style="font-weight:600">Oluwasegun Oyebode</div>
+            <small class="subtitle">Farm Director</small>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Content -->
+    <div class="content">
+      <!-- Header -->
+      <div style="display:flex;justify-content:space-between;align-items:flex-end;flex-wrap:wrap;gap:14px">
+        <div>
+          <div class="page-title">Livestock Management Hub</div>
+          <div class="subtitle">Real-time oversight of animal inventory, health, feed, and productivity.</div>
+        </div>
+        <div style="display:flex;gap:8px">
+          <button id="exportInventory" class="btn btn-primary"><i class="ri-inbox-unarchive-line"></i> Export</button>
+          <button class="btn"><i class="ri-equalizer-line"></i> Filters</button>
+        </div>
+      </div>
+
+      <!-- KPIs -->
+      <section class="grid metrics" style="margin-top:16px">
+        <div class="card">
+          <div class="metric">
+            <div>
+              <small>Total Animals</small>
+              <div class="kpi"><span id="kpiTotal">326</span></div>
+              <small class="up">▲ +3 this week</small>
+            </div>
+            <div class="icon" style="background:#ecfdf5;color:#16a34a"><i class="ri-team-line"></i></div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="metric">
+            <div>
+              <small>Daily Milk</small>
+              <div class="kpi"><span id="kpiMilk">2,140</span> L</div>
+              <small class="muted">Avg 6.7 L/cow</small>
+            </div>
+            <div class="icon" style="background:#eff6ff;color:#2563eb"><i class="ri-cup-line"></i></div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="metric">
+            <div>
+              <small>Daily Meat Gain</small>
+              <div class="kpi"><span id="kpiMeat">182</span> kg</div>
+              <small class="muted">Beef unit growth</small>
+            </div>
+            <div class="icon" style="background:#fff7ed;color:#f97316"><i class="ri-knife-line"></i></div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="metric">
+            <div>
+              <small>Healthy Herd</small>
+              <div class="kpi"><span id="kpiHealthy">92</span>%</div>
+              <small><span class="pill ok">Stable</span></small>
+            </div>
+            <div class="icon" style="background:#ecfeff;color:#0891b2"><i class="ri-heart-pulse-line"></i></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Analytics -->
+      <section class="split" style="margin-top:16px">
+        <div class="card">
+          <h4>Milk & Meat Productivity</h4>
+          <div class="chart-fixed"><canvas id="milkMeatChart"></canvas></div>
+          <small class="muted">Weekly trend (fixed height to avoid stretching)</small>
+        </div>
+
+        <div class="card">
+          <h4>Health Status</h4>
+          <div class="chart-fixed"><canvas id="healthChart"></canvas></div>
+          <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:10px">
+            <span class="pill ok">Healthy</span>
+            <span class="pill warn">Sick (mild)</span>
+            <span class="pill bad">Quarantined</span>
+          </div>
+        </div>
+      </section>
+
+      <!-- New Panels: Feed usage + Breeding + Recommendations -->
+      <div class="panel-row">
+        <div class="card">
+          <h4>Feed Usage (Realtime)</h4>
+          <div style="height:180px"><canvas id="feedChart"></canvas></div>
+          <div style="display:flex;justify-content:space-between;margin-top:8px">
+            <small class="muted">Current stock: <b id="feedStock">3,120</b> kg</small>
+            <div>
+              <button id="reorderFeed" class="btn btn-sm">Reorder</button>
+              <button id="exportFeed" class="btn btn-sm export-btn">Export CSV</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="card">
+          <h4>Breeding & Fertility</h4>
+          <div style="margin-top:8px" class="table-wrap">
+            <table class="breeding-table" style="width:100%;border-collapse:collapse;">
+              <thead style="background:#f3f4f6;"><tr>
+                <th>Group</th><th>Next AI</th><th>Success %</th><th>Notes</th>
+              </tr></thead>
+              <tbody>
+                <tr><td>Heifers</td><td>2025-05-14</td><td>78%</td><td>Sync schedule ongoing</td></tr>
+                <tr><td>Lactating Cows</td><td>2025-06-02</td><td>83%</td><td>Post-AI checks due</td></tr>
+                <tr><td>Dry Cows</td><td>2025-07-10</td><td>69%</td><td>Monitor BCS</td></tr>
+              </tbody>
+            </table>
+          </div>
+
+          <div class="recommendation" style="margin-top:10px">
+            <strong>Smart Recommendation</strong>
+            <p id="recommendationText" style="margin:6px 0 0">Protein feed increase suggested for lactating cows (next 7 days).</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Alerts -->
+      <section class="card" style="margin-top:16px">
+        <h4>Real-time Alerts</h4>
+        <ul id="alerts" style="margin-top:8px;display:grid;gap:8px;padding-left:18px;">
+          <li>🧪 12 animals due for vaccination in 3 days.</li>
+          <li>🥣 Feed stock for Grower ration below 20% — reorder suggested.</li>
+          <li>🩺 3 cows flagged for mastitis screening.</li>
+        </ul>
+      </section>
+
+      <!-- Inventory -->
+      <section class="card" style="margin-top:16px">
+        <h4>Animal Inventory</h4>
+        <div class="table-wrap">
+          <table id="livestockTable" style="width:100%;border-collapse:collapse;margin-top:10px;font-size:14px;">
+            <thead style="background:var(--muted);text-align:left">
+              <tr>
+                <th style="padding:8px">ID</th>
+                <th>Type</th>
+                <th>Breed</th>
+                <th>Age</th>
+                <th>Weight (kg)</th>
+                <th>Milk (L/d)</th>
+                <th>Health</th>
+                <th>Next Action</th>
+                <th style="text-align:center">Action</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td style="padding:8px">C-1021</td>
+                <td>Dairy Cow</td>
+                <td>Friesian</td>
+                <td>4.1y</td>
+                <td>590</td>
+                <td>7.2</td>
+                <td><span class="pill ok">Healthy</span></td>
+                <td>Routine check</td>
+                <td style="text-align:center"><button class="btn btn-primary btn-sm view">View</button></td>
+              </tr>
+              <tr>
+                <td style="padding:8px">C-1088</td>
+                <td>Dairy Cow</td>
+                <td>Jersey</td>
+                <td>3.6y</td>
+                <td>520</td>
+                <td>6.4</td>
+                <td><span class="pill warn">Sick</span></td>
+                <td>Mastitis test</td>
+                <td style="text-align:center"><button class="btn btn-primary btn-sm view">View</button></td>
+              </tr>
+              <tr>
+                <td style="padding:8px">B-2033</td>
+                <td>Beef</td>
+                <td>Brahman</td>
+                <td>2.1y</td>
+                <td>410</td>
+                <td>-</td>
+                <td><span class="pill ok">Healthy</span></td>
+                <td>Weight check</td>
+                <td style="text-align:center"><button class="btn btn-primary btn-sm view">View</button></td>
+              </tr>
+              <tr>
+                <td style="padding:8px">G-5011</td>
+                <td>Goat</td>
+                <td>Boer</td>
+                <td>1.3y</td>
+                <td>68</td>
+                <td>-</td>
+                <td><span class="pill bad">Quarantine</span></td>
+                <td>Vet review</td>
+                <td style="text-align:center"><button class="btn btn-primary btn-sm view">View</button></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+    </div>
+  </main>
+</div>
+
+<!-- Floating Actions -->
+<div class="footer-actions">
+  <button class="fab"><i class="ri-equalizer-line"></i></button>
+  <button class="fab" style="background:#22c55e"><i class="ri-question-line"></i></button>
+</div>
+
+<!-- Modal (animal profile) -->
+<div class="modal-backdrop" id="modalBackdrop" aria-hidden="true">
+  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+    <div style="display:flex;justify-content:space-between;align-items:center;">
+      <h4 id="modalTitle">Animal Profile</h4>
+      <button id="closeModal" class="btn">Close</button>
+    </div>
+    <div style="margin-top:12px;display:flex;gap:12px;flex-wrap:wrap">
+      <div class="col" style="min-width:220px">
+        <div><strong id="modalId">ID: -</strong></div>
+        <div id="modalType" style="margin-top:6px">Type: -</div>
+        <div id="modalBreed">Breed: -</div>
+        <div id="modalAge">Age: -</div>
+      </div>
+      <div class="col">
+        <div id="modalWeight">Weight: - kg</div>
+        <div id="modalMilk">Milk/day: - L</div>
+        <div id="modalHealth" style="margin-top:6px">Health: -</div>
+      </div>
+      <div class="col">
+        <div id="modalNotes">Notes: -</div>
+      </div>
+    </div>
+
+    <div style="margin-top:14px;display:flex;gap:8px;justify-content:flex-end">
+      <button id="modalActionExport" class="btn">Export</button>
+      <button id="modalActionClose" class="btn">Close</button>
+    </div>
+  </div>
+</div>
+
+<!-- Toast container -->
+<div class="toast-container" id="toastContainer" aria-live="polite" aria-atomic="true"></div>
+
+<!-- Scripts -->
+<script src="assets/script.js"></script>
+<script>
+/* ------- Keep existing charts (milkMeatChart, healthChart) and logic and extend them ------- */
+/* Milk & Meat (existing) */
+const mmCtx = document.getElementById('milkMeatChart');
+const milkMeatChart = new Chart(mmCtx, {
+  type: 'line',
+  data: {
+    labels: ['Wk 1','Wk 2','Wk 3','Wk 4','Wk 5','Wk 6','Wk 7','Wk 8'],
+    datasets: [
+      { label:'Milk (L)', data:[1950,2020,2090,2040,2120,2180,2140,2160], borderColor:'#2563eb', backgroundColor:'rgba(37,99,235,.08)', fill:true, tension:.35 },
+      { label:'Meat Gain (kg)', data:[160,170,168,172,175,180,178,182], borderColor:'#f97316', backgroundColor:'rgba(249,115,22,.08)', fill:true, tension:.35 }
+    ]
+  },
+  options:{
+    responsive:true,
+    maintainAspectRatio:false,
+    plugins:{ legend:{ position:'bottom' } },
+    scales:{ y:{ beginAtZero:false, grid:{ drawBorder:false } }, x:{ grid:{ display:false } } }
+  }
+});
+
+/* Health donut (existing) */
+const hCtx = document.getElementById('healthChart');
+const healthChart = new Chart(hCtx, {
+  type: 'doughnut',
+  data: {
+    labels: ['Healthy','Sick','Quarantine'],
+    datasets: [{ data:[92,6,2], backgroundColor:['#22c55e','#fbbf24','#f87171'] }]
+  },
+  options: { responsive:true, maintainAspectRatio:false, plugins:{ legend:{ position:'bottom' } }, cutout:'60%' }
+});
+
+/* ------- New Feed Usage chart ------- */
+const feedCtx = document.getElementById('feedChart');
+const feedChart = new Chart(feedCtx, {
+  type: 'line',
+  data: {
+    labels: ['T-6','T-5','T-4','T-3','T-2','T-1','Now'],
+    datasets: [
+      { label:'Feed Stock (kg)', data:[3800,3700,3550,3400,3300,3200,3120], borderColor:'#10b981', backgroundColor:'rgba(16,185,129,0.06)', fill:true, tension:.3 },
+      { label:'Daily Consumption (kg)', data:[120,140,150,160,130,140,150], borderColor:'#ef4444', backgroundColor:'rgba(239,68,68,0.06)', fill:true, tension:.3 }
+    ]
+  },
+  options:{
+    responsive:true, maintainAspectRatio:false,
+    plugins:{ legend:{ position:'bottom' } },
+    scales:{ y:{ beginAtZero:true }, x:{ grid:{ display:false } } }
+  }
+});
+
+/* ------- KPIs + Alerts (simulated real-time) ------- */
+const el = (id)=>document.getElementById(id);
+const kpiTotal = el('kpiTotal'), kpiMilk = el('kpiMilk'), kpiMeat = el('kpiMeat'), kpiHealthy = el('kpiHealthy');
+const alerts = el('alerts');
+const feedStockEl = el('feedStock');
+const recommendationText = el('recommendationText');
+
+function randWithin(base, drift){ return Math.max(0, Math.round(base + (Math.random()*2-1)*drift)); }
+
+/* Simulated real-time updates - extend previous behavior to update new charts & features */
+setInterval(()=>{
+  // Update totals a bit
+  const milk = randWithin(2140, 40);
+  const meat = randWithin(182, 6);
+  const healthyPct = Math.min(98, Math.max(85, randWithin(92, 2)));
+
+  kpiMilk.textContent = milk.toLocaleString();
+  kpiMeat.textContent = meat.toLocaleString();
+  kpiHealthy.textContent = healthyPct;
+
+  // Push into milk/meat charts (rolling)
+  milkMeatChart.data.datasets[0].data.push(milk);
+  milkMeatChart.data.datasets[1].data.push(meat);
+  const nextLabel = 'Wk ' + (milkMeatChart.data.labels.length + 1);
+  milkMeatChart.data.labels.push(nextLabel);
+  if (milkMeatChart.data.labels.length > 12) {
+    milkMeatChart.data.labels.shift();
+    milkMeatChart.data.datasets.forEach(ds => ds.data.shift());
+  }
+  milkMeatChart.update('none');
+
+  // Health donut update
+  const sick = Math.max(1, Math.round((100 - healthyPct) * 0.7));
+  const quar = Math.max(1, 100 - healthyPct - sick);
+  healthChart.data.datasets[0].data = [healthyPct, sick, quar];
+  healthChart.update('none');
+
+  // Feed: simulate consumption
+  const lastStock = feedChart.data.datasets[0].data[feedChart.data.datasets[0].data.length - 1] || 3120;
+  const consumption = randWithin(150, 20);
+  const newStock = Math.max(0, lastStock - consumption);
+  feedChart.data.datasets[0].data.push(newStock);
+  feedChart.data.datasets[1].data.push(consumption);
+  feedChart.data.labels.push('T+' + (feedChart.data.labels.length - 6));
+  if(feedChart.data.labels.length > 12){
+    feedChart.data.labels.shift();
+    feedChart.data.datasets.forEach(ds => ds.data.shift());
+  }
+  feedChart.update('none');
+  feedStockEl.textContent = newStock.toLocaleString();
+
+  // Smart recommendation: if stock low or healthy drops
+  if (newStock < 2000) {
+    recommendationText.textContent = 'Low feed stock — schedule reorder. Consider higher energy mix for lactating cows.';
+  } else if (healthyPct < 90) {
+    recommendationText.textContent = 'Increase monitoring: slight drop in herd health; review water and feed quality.';
+  } else {
+    recommendationText.textContent = 'Herd stable. Maintain current feeding and health schedule.';
+  }
+
+  // Occasional alert + toast
+  if (Math.random() < 0.25) {
+    const msgs = [
+      '🧬 New calf registered in Barn 3.',
+      '🩺 Vet note: follow-up check required for pen 7.',
+      '🥣 Feed mix updated for Growers.',
+      '💧 Water flow drop detected on line A — inspect valve.',
+      '📦 Vaccine batch #A41 delivered to store.'
+    ];
+    const msg = msgs[Math.floor(Math.random()*msgs.length)];
+    const li = document.createElement('li');
+    li.textContent = msg;
+    alerts.prepend(li);
+    while (alerts.children.length > 8) alerts.removeChild(alerts.lastChild);
+    // show toast
+    showToast(msg);
+  }
+}, 5000);
+
+/* ------- Table actions: modal instead of alert ------- */
+const modalBackdrop = document.getElementById('modalBackdrop');
+const modalId = document.getElementById('modalId');
+const modalType = document.getElementById('modalType');
+const modalBreed = document.getElementById('modalBreed');
+const modalAge = document.getElementById('modalAge');
+const modalWeight = document.getElementById('modalWeight');
+const modalMilk = document.getElementById('modalMilk');
+const modalHealth = document.getElementById('modalHealth');
+const modalNotes = document.getElementById('modalNotes');
+
+function openModalForRow(tr){
+  const cells = tr.children;
+  modalId.textContent = 'ID: ' + cells[0].textContent.trim();
+  modalType.textContent = 'Type: ' + cells[1].textContent.trim();
+  modalBreed.textContent = 'Breed: ' + cells[2].textContent.trim();
+  modalAge.textContent = 'Age: ' + cells[3].textContent.trim();
+  modalWeight.textContent = 'Weight: ' + cells[4].textContent.trim() + ' kg';
+  modalMilk.textContent = 'Milk/day: ' + cells[5].textContent.trim() + ' L';
+  modalHealth.innerHTML = 'Health: ' + cells[6].textContent.trim();
+  modalNotes.textContent = 'Notes: Next action — ' + cells[7].textContent.trim();
+  modalBackdrop.style.display = 'flex';
+  modalBackdrop.setAttribute('aria-hidden','false');
+}
+
+function closeModal(){
+  modalBackdrop.style.display = 'none';
+  modalBackdrop.setAttribute('aria-hidden','true');
+}
+
+/* Attach listeners to .view buttons (existing + newly added rows) */
+function attachViewListeners(){
+  document.querySelectorAll('#livestockTable .view').forEach(btn=>{
+    if (btn._hasListener) return;
+    btn._hasListener = true;
+    btn.addEventListener('click', (e)=>{
+      const tr = e.target.closest('tr');
+      if(tr) openModalForRow(tr);
+    });
+  });
+}
+attachViewListeners();
+
+document.getElementById('closeModal').addEventListener('click', closeModal);
+document.getElementById('modalActionClose').addEventListener('click', closeModal);
+document.getElementById('modalBackdrop').addEventListener('click', (e)=>{ if(e.target === modalBackdrop) closeModal(); });
+
+document.getElementById('modalActionExport').addEventListener('click', ()=>{
+  // export modal row data as CSV
+  const csvRows = [
+    ['Field','Value'],
+    [modalId.textContent.split(':')[0], modalId.textContent.split(':')[1]?.trim() || ''],
+    ['Type', modalType.textContent.split(':')[1]?.trim() || ''],
+    ['Breed', modalBreed.textContent.split(':')[1]?.trim() || ''],
+    ['Age', modalAge.textContent.split(':')[1]?.trim() || ''],
+    ['Weight', modalWeight.textContent.split(':')[1]?.trim() || ''],
+    ['Milk/day', modalMilk.textContent.split(':')[1]?.trim() || ''],
+    ['Health', modalHealth.textContent.split(':')[1]?.trim() || '']
+  ];
+  const csv = csvRows.map(r => `"${r[0]}","${r[1]}"`).join('\n');
+  const blob = new Blob([csv],{type:'text/csv'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = (modalId.textContent.replace(/\s/g,'') || 'animal') + '.csv';
+  document.body.appendChild(a); a.click(); a.remove();
+});
+
+/* ------- Add Animal (quick demo) ------- */
+document.getElementById('addAnimalBtn').addEventListener('click', ()=>{
+  const tbody = document.querySelector('#livestockTable tbody');
+  const id = 'C-' + Math.floor(1000 + Math.random()*9000);
+  const tr = document.createElement('tr');
+  tr.innerHTML = `
+    <td style="padding:8px">${id}</td>
+    <td>Dairy Cow</td>
+    <td>Friesian</td>
+    <td>${(2+Math.random()*3).toFixed(1)}y</td>
+    <td>${Math.round(480+Math.random()*120)}</td>
+    <td>${(5+Math.random()*3).toFixed(1)}</td>
+    <td><span class="pill ok">Healthy</span></td>
+    <td>Acclimatization</td>
+    <td style="text-align:center"><button class="btn btn-primary btn-sm view">View</button></td>
+  `;
+  tbody.prepend(tr);
+  // bump KPI
+  kpiTotal.textContent = (parseInt(kpiTotal.textContent,10) + 1).toString();
+  attachViewListeners();
+  showToast('New animal added: ' + id);
+});
+
+/* ------- Export inventory CSV ------- */
+document.getElementById('exportInventory').addEventListener('click', ()=>{
+  const rows = [];
+  const headers = Array.from(document.querySelectorAll('#livestockTable thead th')).map(th => th.textContent.trim());
+  rows.push(headers);
+  document.querySelectorAll('#livestockTable tbody tr').forEach(tr=>{
+    const cols = Array.from(tr.children).slice(0,8).map(td => td.textContent.trim().replace(/\n/g, ' '));
+    rows.push(cols);
+  });
+  const csv = rows.map(r => r.map(c => `"${c.replace(/"/g,'""')}"`).join(',')).join('\n');
+  const blob = new Blob([csv], { type: 'text/csv' });
+  const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'livestock_inventory.csv';
+  document.body.appendChild(a); a.click(); a.remove();
+  showToast('Inventory exported');
+});
+
+/* ------- Export feed CSV ------- */
+document.getElementById('exportFeed').addEventListener('click', ()=>{
+  const labels = feedChart.data.labels;
+  const stock = feedChart.data.datasets[0].data;
+  const cons = feedChart.data.datasets[1].data;
+  const rows = [['Time','Stock (kg)','Consumption (kg)']];
+  for(let i=0;i<labels.length;i++){
+    rows.push([labels[i], stock[i] || '', cons[i] || '']);
+  }
+  const csv = rows.map(r => r.map(c => `"${String(c).replace(/"/g,'""')}"`).join(',')).join('\n');
+  const blob = new Blob([csv], { type: 'text/csv' });
+  const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'feed_timeseries.csv';
+  document.body.appendChild(a); a.click(); a.remove();
+  showToast('Feed timeseries exported');
+});
+
+/* ------- Reorder feed (simulated) ------- */
+document.getElementById('reorderFeed').addEventListener('click', ()=>{
+  // simulate reorder: add 1500 kg
+  const newStock = (parseInt(feedStockEl.textContent.replace(/,/g,''),10) || 0) + 1500;
+  feedChart.data.datasets[0].data[feedChart.data.datasets[0].data.length - 1] = newStock;
+  feedChart.update();
+  feedStockEl.textContent = newStock.toLocaleString();
+  showToast('Feed reorder placed (+1,500 kg)');
+});
+
+/* ------- Toast system ------- */
+const toastContainer = document.getElementById('toastContainer');
+function showToast(msg, ttl = 4500){
+  const t = document.createElement('div');
+  t.className = 'toast';
+  t.innerHTML = `<div style="font-size:16px">🔔</div><div style="flex:1"><div style="font-weight:600">${msg}</div></div><div><button class="btn btn-sm">OK</button></div>`;
+  toastContainer.appendChild(t);
+  // remove after ttl
+  const okBtn = t.querySelector('button');
+  okBtn.addEventListener('click', ()=> { t.remove(); });
+  setTimeout(()=>{ if(t.parentNode) t.remove(); }, ttl);
+}
+
+/* ------- Attach initial view listeners ------- */
+attachViewListeners();
+
+/* ------- Initialize feed stock display from chart data ------- */
+feedStockEl.textContent = (feedChart.data.datasets[0].data[feedChart.data.datasets[0].data.length - 1] || 3120).toLocaleString();
+
+/* ------- Small accessibility: close modal on Esc ------- */
+document.addEventListener('keydown', (e)=>{ if(e.key === 'Escape') closeModal(); });
+
+</script>
+</body>
+</html>

@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>AgroLink — Equipment</title>
+
+<!-- Fonts & Icons -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://cdn.jsdelivr.net/npm/remixicon@4.3.0/fonts/remixicon.css" rel="stylesheet"/>
+
+<!-- Styles -->
+<link rel="stylesheet" href="assets/style.css" />
+
+<!-- Leaflet -->
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+<!-- Chart.js -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
+</head>
+<body>
+<div class="layout">
+  <!-- Sidebar -->
+  <aside class="sidebar">
+    <div class="brand"><i class="ri-plant-line"></i> AgroLink</div>
+    <nav class="nav">
+      <h4>MENU</h4>
+      <a href="index.html"><i class="ri-dashboard-line"></i> Dashboard</a>
+      <a href="crops.html"><i class="ri-seedling-line"></i> Crops</a>
+      <a href="livestock.html"><i class="ri-medicine-bottle-line"></i> Livestock</a>
+      <a href="fields.html"><i class="ri-map-pin-line"></i> Fields</a>
+      <a href="weather.html"><i class="ri-cloud-windy-line"></i> Weather</a>
+      <a href="equipment.html" class="active"><i class="ri-tools-line"></i> Equipment</a>
+      <a href="finance.html"><i class="ri-money-dollar-box-line"></i> Finance</a>
+      <a href="reports.html"><i class="ri-bar-chart-2-line"></i> Reports</a>
+      <a href="settings.html"><i class="ri-settings-3-line"></i> Settings</a>
+    </nav>
+  </aside>
+
+  <!-- Main -->
+  <main>
+    <!-- Topbar -->
+    <div class="topbar">
+      <div class="search"><i class="ri-search-line"></i><input placeholder="Search tractors, harvesters, drones..." /></div>
+      <div class="top-actions">
+        <button class="btn"><i class="ri-calendar-line"></i><span id="rangeLabel">Jan 2025</span></button>
+        <button id="addEquipBtn" class="btn btn-primary"><i class="ri-add-circle-line"></i> Add Equipment</button>
+        <button id="themeToggle" class="theme-toggle"><i class="ri-contrast-2-line"></i> Theme</button>
+        <div class="avatar">
+          <img src="https://i.pravatar.cc/60?img=30" alt="">
+          <div>
+            <div style="font-weight:600">Oluwasegun Oyebode</div>
+            <small class="subtitle">Farm Director</small>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Content -->
+    <div class="content">
+      <!-- Header -->
+      <div style="display:flex;justify-content:space-between;align-items:flex-end;flex-wrap:wrap;gap:14px">
+        <div>
+          <div class="page-title">Equipment Management Hub</div>
+          <div class="subtitle">Track equipment usage, location, and efficiency in real-time.</div>
+        </div>
+        <div style="display:flex;gap:8px">
+          <button class="btn btn-primary"><i class="ri-inbox-unarchive-line"></i> Export</button>
+          <button class="btn"><i class="ri-equalizer-line"></i> Filters</button>
+        </div>
+      </div>
+
+      <!-- KPIs -->
+      <section class="grid metrics" style="margin-top:16px">
+        <div class="card"><div class="metric"><div><small>Total Equipment</small><div class="kpi">18</div><small class="up">+2 added</small></div><div class="icon" style="background:#ecfdf5;color:#16a34a"><i class="ri-tools-line"></i></div></div></div>
+        <div class="card"><div class="metric"><div><small>Active Now</small><div class="kpi">12</div><small class="muted">Mostly tractors</small></div><div class="icon" style="background:#eff6ff;color:#2563eb"><i class="ri-steering-2-line"></i></div></div></div>
+        <div class="card"><div class="metric"><div><small>Under Maintenance</small><div class="kpi">3</div><small class="pill warn">Service</small></div><div class="icon" style="background:#fff7ed;color:#f97316"><i class="ri-settings-5-line"></i></div></div></div>
+        <div class="card"><div class="metric"><div><small>Efficiency Rate</small><div class="kpi">91%</div><small class="muted">Uptime vs downtime</small></div><div class="icon" style="background:#ecfeff;color:#0891b2"><i class="ri-speed-line"></i></div></div></div>
+      </section>
+
+      <section class="card" style="margin-top:16px">
+        <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px">
+          <h4>Equipment Inventory</h4>
+          <!-- Filter Dropdown -->
+          <select id="equipFilter" class="btn" style="padding:6px 10px;border-radius:6px;border:1px solid var(--muted)">
+            <option value="all">All Equipment</option>
+            <option value="Tractor">Tractors</option>
+            <option value="Drone">Drones</option>
+            <option value="Harvester">Harvesters</option>
+            <option value="Sprayer">Sprayers</option>
+          </select>
+        </div>
+        
+        <div class="table-wrap">
+          <table id="equipTable" style="width:100%;border-collapse:collapse;margin-top:10px;font-size:14px;">
+            <thead style="background:var(--muted);text-align:left">
+              <tr>
+                <th style="padding:8px">ID</th>
+                <th>Type</th>
+                <th>Status</th>
+                <th>Fuel/Battery</th>
+                <th>Last Service</th>
+                <th>Next Service</th>
+                <th>Operator</th>
+                <th style="text-align:center">Action</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr data-type="Tractor">
+                <td style="padding:8px">T1</td>
+                <td>Tractor</td>
+                <td><span class="pill ok">Active</span></td>
+                <td>80%</td>
+                <td>Jan 2025</td>
+                <td>Apr 2025</td>
+                <td>John Doe</td>
+                <td style="text-align:center"><button class="btn btn-primary btn-sm">View</button></td>
+              </tr>
+              <tr data-type="Drone">
+                <td style="padding:8px">D3</td>
+                <td>Drone</td>
+                <td><span class="pill warn">Low Battery</span></td>
+                <td>15%</td>
+                <td>Feb 2025</td>
+                <td>May 2025</td>
+                <td>Jane Smith</td>
+                <td style="text-align:center"><button class="btn btn-primary btn-sm">View</button></td>
+              </tr>
+              <tr data-type="Harvester">
+                <td style="padding:8px">H2</td>
+                <td>Harvester</td>
+                <td><span class="pill warn">Service</span></td>
+                <td>60%</td>
+                <td>Jan 2025</td>
+                <td>Mar 2025</td>
+                <td>Samuel Ade</td>
+                <td style="text-align:center"><button class="btn btn-primary btn-sm">View</button></td>
+              </tr>
+              <tr data-type="Sprayer">
+                <td style="padding:8px">S1</td>
+                <td>Sprayer</td>
+                <td><span class="pill idle">Idle</span></td>
+                <td>95%</td>
+                <td>Dec 2024</td>
+                <td>Apr 2025</td>
+                <td>Aisha Bello</td>
+                <td style="text-align:center"><button class="btn btn-primary btn-sm">View</button></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+
+      <!-- Usage Chart -->
+      <section class="card" style="margin-top:16px">
+        <h4>Weekly Equipment Usage</h4>
+        <canvas id="equipUsageChart" height="200"></canvas>
+      </section>
+
+      <!-- Timeline -->
+      <section class="card" style="margin-top:16px">
+        <h4>Equipment Efficiency Timeline</h4>
+        <canvas id="equipTimelineChart" height="200"></canvas>
+      </section>
+
+      <!-- Map -->
+      <section class="card" style="margin-top:16px">
+        <h4>Equipment Live Locations</h4>
+        <div id="equipMap" style="height:400px;border-radius:12px;overflow:hidden;"></div>
+      </section>
+
+      <!-- Alerts -->
+      <section class="card" style="margin-top:16px">
+        <h4>Real-time Maintenance Alerts</h4>
+        <ul id="equipAlerts" style="margin-top:8px;display:grid;gap:8px;padding-left:18px;">
+          <li>⚠️ Tractor #T5 due for oil change.</li>
+          <li>🛠️ Harvester #H2 gearbox service scheduled.</li>
+        </ul>
+      </section>
+
+      <!-- Equipment Table -->
+      <section class="card" style="margin-top:16px">
+        <h4>Equipment Inventory</h4>
+        <div class="table-wrap">
+          <table style="width:100%;border-collapse:collapse;margin-top:10px;font-size:14px;">
+            <thead style="background:var(--muted);text-align:left">
+              <tr>
+                <th style="padding:8px">ID</th>
+                <th>Type</th>
+                <th>Status</th>
+                <th>Fuel/Battery</th>
+                <th>Last Service</th>
+                <th>Next Service</th>
+                <th>Operator</th>
+                <th style="text-align:center">Action</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td style="padding:8px">T1</td>
+                <td>Tractor</td>
+                <td><span class="pill ok">Active</span></td>
+                <td>80%</td>
+                <td>Jan 2025</td>
+                <td>Apr 2025</td>
+                <td>John Doe</td>
+                <td style="text-align:center"><button class="btn btn-primary btn-sm">View</button></td>
+              </tr>
+              <tr>
+                <td style="padding:8px">D3</td>
+                <td>Drone</td>
+                <td><span class="pill warn">Low Battery</span></td>
+                <td>15%</td>
+                <td>Feb 2025</td>
+                <td>May 2025</td>
+                <td>Jane Smith</td>
+                <td style="text-align:center"><button class="btn btn-primary btn-sm">View</button></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+    </div>
+  </main>
+</div>
+
+<!-- Floating Actions -->
+<div class="footer-actions">
+  <button class="fab"><i class="ri-equalizer-line"></i></button>
+  <button class="fab" style="background:#22c55e"><i class="ri-question-line"></i></button>
+</div>
+
+<!-- Scripts -->
+<script src="assets/script.js"></script>
+<script src="assets/equipment.js"></script>
+</body>
+</html>
