@@ -56,7 +56,7 @@
   /* Sidebar (preserve content + style improvements) */
   .sidebar{
     background:#1f2937; color:#cbd5e1; padding:16px 12px; position:sticky; top:0; height:100vh;
-    display:flex; flex-direction:column; justify-content:flex-start;
+    display:flex; flex-direction:column; justify-content:flex-start; z-index:40; transition: transform .28s cubic-bezier(.2,.9,.3,1);
   }
   .brand{display:flex; align-items:center; gap:10px; color:#fff; font-weight:700; font-size:20px; padding:12px}
   .brand i{font-size:22px;color:#22c55e}
@@ -76,7 +76,7 @@
   /* Topbar (unchanged structure - enhanced visuals) */
   .topbar{
     display:flex; align-items:center; justify-content:space-between; padding:14px 20px; background:var(--card);
-    border-bottom:1px solid var(--ring); position:sticky; top:0; z-index:5;
+    border-bottom:1px solid var(--ring); position:sticky; top:0; z-index:20;
     box-shadow: var(--card-shadow);
   }
   .search{display:flex; align-items:center; gap:8px; background:#f3f4f6; padding:10px 12px; border-radius:10px; width:420px}
@@ -126,33 +126,63 @@
   .theme-toggle { display:inline-flex; align-items:center; gap:8px; padding:8px 12px; border-radius:10px; cursor:pointer; border:1px solid var(--ring); background:var(--card) }
   .small-muted{ font-size:13px; color:var(--muted) }
 
-  /* small responsive tweaks (keeps original breakpoints) */
+  /* Mobile / responsive behavior */
   @media (max-width:1100px){
+    .layout{ grid-template-columns: 1fr; }
+    /* hide desktop sticky full sidebar but keep the element for overlay */
+    .sidebar{
+      position:fixed; left:0; top:0; height:100vh; transform: translateX(-110%); width:260px;
+      box-shadow: 0 24px 48px rgba(2,6,23,0.4);
+    }
+    /* when open, slide in */
+    .sidebar.open{ transform: translateX(0); }
+    /* reduced z-index so topbar sits above main content but below sidebar */
+    .sidebar { z-index:1200; }
+    /* add backdrop */
+    .sidebar-backdrop{ display:none; position:fixed; inset:0; background:rgba(2,6,23,0.45); z-index:1100; transition:opacity .18s; opacity:0; }
+    .sidebar-backdrop.visible{ display:block; opacity:1; }
+    /* topbar: add hamburger at left */
+    .topbar { padding-left:12px; padding-right:12px; }
+    .hamburg {
+      display:inline-flex; align-items:center; justify-content:center; width:40px; height:40px; border-radius:8px;
+      margin-right:8px; border:1px solid var(--ring); background:var(--card); cursor:pointer;
+    }
+    .search{ width:100% }
     .grid.metrics{grid-template-columns:repeat(2,1fr)}
     .split{grid-template-columns:1fr}
-    .search{width:100%}
-    .layout{ grid-template-columns: 1fr }
-    .sidebar{ position:relative; height:auto }
+    .sidebar .brand{ padding-left:10px }
   }
+
+  /* desktop no hamburger */
+  @media (min-width:1101px){
+    .hamburg { display:none; }
+    .sidebar-backdrop{ display:none !important; }
+  }
+
+  /* simple accessible focus outline */
+  .hamburg:focus, .btn:focus, .pill:focus, .nav a:focus { outline: 3px solid rgba(79,70,229,0.12); outline-offset:2px; border-radius:8px; }
+
+  /* small helper for visually-hidden text */
+  .sr-only{ position:absolute; left:-9999px; top:auto; width:1px; height:1px; overflow:hidden; }
 </style>
 </head>
 <body>
 <div class="layout">
   <!-- Sidebar (exact structure preserved; brand name changed in your last paste to AgroLink so preserved) -->
-  <aside class="sidebar">
+  <aside class="sidebar" id="sidebar" aria-hidden="false">
     <div>
       <div class="brand"><i class="ri-plant-line"></i> AgroLink</div>
-      <nav class="nav">
+      <nav class="nav" aria-label="Main navigation">
         <h4>MENU</h4>
-        <a href="index.html"><i class="ri-dashboard-line"></i> Dashboard</a>
-        <a href="crops.html" class="active"><i class="ri-seedling-line"></i> Crops</a>
-        <a href="livestock.html"><i class="ri-medicine-bottle-line"></i> Livestock</a>
-        <a href="fields.html"><i class="ri-map-pin-line"></i> Fields</a>
-        <a href="weather.html"><i class="ri-cloud-windy-line"></i> Weather</a>
-        <a href="equipment.html"><i class="ri-tools-line"></i> Equipment</a>
-        <a href="finance.html"><i class="ri-money-dollar-box-line"></i> Finance</a>
-        <a href="reports.html"><i class="ri-bar-chart-2-line"></i> Reports</a>
-        <a href="settings.html"><i class="ri-settings-3-line"></i> Settings</a>
+        <a href="agro-dashboard-enhanced.html" class="active"><i class="ri-dashboard-line"></i> Dashboard</a>
+      <a href="crops.html"><i class="ri-seedling-line"></i> Crops</a>
+      <a href="livestock.html"><i class="ri-medicine-bottle-line"></i> Livestock</a>
+      <a href="fields.html"><i class="ri-map-pin-line"></i> Fields</a>
+      <a href="weather.html"><i class="ri-cloud-windy-line"></i> Weather</a>
+      <a href="equipment.html"><i class="ri-tools-line"></i> Equipment</a>
+      <a href="finance.html" class="active"><i class="ri-money-dollar-box-line"></i> Finance</a>
+      <a href="reports.html"><i class="ri-bar-chart-2-line"></i> Reports</a>
+      <a href="settings.html"><i class="ri-settings-3-line"></i> Settings</a>
       </nav>
     </div>
 
@@ -170,11 +200,26 @@
     </div>
   </aside>
 
+  <!-- Backdrop for sidebar overlay (mobile) -->
+  <div id="sidebarBackdrop" class="sidebar-backdrop" tabindex="-1" aria-hidden="true"></div>
+
   <!-- Main -->
   <main>
     <!-- Topbar (structure preserved) -->
     <div class="topbar">
-      <div class="search"><i class="ri-search-line"></i><input placeholder="Search fields, crops, tasks..." /></div>
+      <div style="display:flex;align-items:center;gap:8px">
+        <!-- hamburger (visible on mobile) -->
+        <button id="hamburgBtn" class="hamburg" aria-label="Open menu" title="Menu">
+          <svg width="18" height="14" viewBox="0 0 18 14" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden>
+            <rect width="18" height="2" rx="1" fill="#111827"></rect>
+            <rect y="6" width="18" height="2" rx="1" fill="#111827"></rect>
+            <rect y="12" width="18" height="2" rx="1" fill="#111827"></rect>
+          </svg>
+        </button>
+
+        <div class="search"><i class="ri-search-line"></i><input placeholder="Search fields, crops, tasks..." /></div>
+      </div>
+
       <div class="top-actions">
         <button class="btn"><i class="ri-calendar-line"></i><span id="rangeLabel">01 Jan, 2025 to 31 Jan, 2025</span></button>
 
@@ -264,7 +309,9 @@
               <button data-range="1Y" class="pill">1Y</button>
             </div>
           </div>
-          <canvas id="revenueChart" height="160"></canvas>
+          <div style="min-height:220px">
+            <canvas id="revenueChart" height="160" style="width:100%;height:240px"></canvas>
+          </div>
           <div class="kpis">
             <div><b id="kpiShipments">7,585</b><span>Shipments</span></div>
             <div><b id="kpiRevenue">$22.89k</b><span>Revenue</span></div>
@@ -316,293 +363,8 @@
   <button class="fab" title="Help" style="background:#22c55e"><i class="ri-question-line"></i></button>
 </div>
 
-<script>
-/* -------------------------
-   Original demo data preserved
-   ------------------------- */
-const datasetByRange = {
-  ALL: { labels: ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'],
-    harvest:[120,140,135,150,180,200,210,205,198,190,175,160],
-    revenue:[20,22,24,26,28,30,32,33,31,29,26,24] },
-  '1M': { labels:['Week 1','Week 2','Week 3','Week 4'], harvest:[40,46,42,50], revenue:[7,8,7.5,9] },
-  '6M': { labels:['Feb','Mar','Apr','May','Jun','Jul'], harvest:[140,135,150,180,200,210], revenue:[22,24,26,28,30,32] },
-  '1Y': { labels:['Q1','Q2','Q3','Q4'], harvest:[395,540,618,525], revenue:[66,84,96,79] },
-};
 
-/* --------------------------------------
-   Helper: last item
-   ------------------------------------- */
-function last(arr){ return arr[arr.length - 1]; }
-
-/* --------------------------------------
-   Animate number (re-usable)
-   - Element id or element reference
-   - start -> end (numbers)
-   - formatFn to render value
-   ------------------------------------- */
-function animateValue(el, start, end, duration = 700, formatFn = v => Math.round(v)){
-  const elem = typeof el === 'string' ? document.getElementById(el) : el;
-  const startTime = performance.now();
-  const from = Number(start) || 0;
-  const to = Number(end) || 0;
-  function step(now){
-    const t = Math.min(1, (now - startTime) / duration);
-    const eased = 1 - Math.pow(1 - t, 3); // easeOutCubic
-    const val = from + (to - from) * eased;
-    elem.textContent = formatFn(val);
-    if(t < 1) requestAnimationFrame(step);
-  }
-  requestAnimationFrame(step);
-}
-
-/* --------------------------------------
-   Parsing helpers to retain original display formats
-   (so we don't remove or drastically change what you wrote)
-   ------------------------------------- */
-function detectUnitAndNumber(str){
-  if(!str) return {num:0, unit:''};
-  const s = String(str).trim();
-  const hasK = /k$/i.test(s);
-  const hasT = /t\b/i.test(s);
-  const raw = Number(s.replace(/[^0-9.\-]/g,''));
-  return { num: raw, unit: hasK ? 'k' : (hasT ? 't' : '') };
-}
-
-/* --------------------------------------
-   CHARTS: create revenueChart with nicer animation & gradient
-   ------------------------------------- */
-const ctx = document.getElementById('revenueChart').getContext('2d');
-
-/* create gradients for nicer fill (keeps dataset arrays identical) */
-const g1 = ctx.createLinearGradient(0,0,0,220);
-g1.addColorStop(0, 'rgba(79,70,229,0.20)');
-g1.addColorStop(1, 'rgba(79,70,229,0.02)');
-const g2 = ctx.createLinearGradient(0,0,0,220);
-g2.addColorStop(0, 'rgba(34,197,94,0.14)');
-g2.addColorStop(1, 'rgba(34,197,94,0.02)');
-
-const chart = new Chart(ctx, {
-  type:'line',
-  data:{
-    labels: datasetByRange.ALL.labels,
-    datasets:[
-      { label:'Harvest (t)', data: datasetByRange.ALL.harvest, tension:.35, borderWidth:2, backgroundColor: g1, borderColor: 'rgb(79,70,229)', fill:true, pointRadius:3 },
-      { label:'Revenue ($k)', data: datasetByRange.ALL.revenue, tension:.35, borderWidth:2, borderDash:[6,6], backgroundColor: g2, borderColor: 'rgb(34,197,94)', fill:true, pointRadius:3 }
-    ]
-  },
-  options:{
-    responsive:true,
-    maintainAspectRatio:false,
-    animation: { duration: 900, easing: 'easeOutCubic' },
-    scales:{
-      y:{ grid:{color:'#eef2ff'} },
-      x:{ grid:{display:false} }
-    },
-    plugins:{ legend:{position:'bottom', labels:{usePointStyle:true}} }
-  }
-});
-
-/* --------------------------------------
-   KPI update function (same name and behavior preserved)
-   includes animated counters for the four top cards
-   ------------------------------------- */
-function updateKPIs(range){
-  const ds = datasetByRange[range];
-  const lastH = last(ds.harvest);
-  const lastR = last(ds.revenue);
-  // Shipments ~ arbitrary derivation for demo
-  const shipments = Math.round(lastH * 36);
-  const revenueVal = Math.round(lastR * 1000);
-  const wastage = Math.round(lastH * 0.12);
-  const yieldEff = 80 + (lastH % 20); // demo formula
-
-  // Existing KPI elements animate (we keep their IDs)
-  animateValue('kpiShipments', Number(document.getElementById('kpiShipments').textContent.replace(/,/g,'')), shipments, 700, v => Math.round(v).toLocaleString());
-  animateValue('kpiRevenue', Number(document.getElementById('kpiRevenue').textContent.replace(/[^0-9.-]+/g,'')), revenueVal, 700, v => '$' + Math.round(v).toLocaleString());
-  animateValue('kpiWastage', Number(document.getElementById('kpiWastage').textContent.replace(/,/g,'')), wastage, 700, v => Math.round(v).toLocaleString());
-  animateValue('kpiYield', Number(document.getElementById('kpiYield').textContent.replace('%','')), yieldEff, 700, v => (Math.round(v*100)/100) + '%');
-
-  // Animate top summary metrics while keeping their displayed formats
-  // mHarvest: "36,894 t" -> animate integer
-  const harvestInfo = detectUnitAndNumber(document.getElementById('mHarvest').textContent);
-  if(harvestInfo.unit === 't'){
-    animateValue('mHarvest', 0, harvestInfo.num, 900, v => Math.round(v).toLocaleString() + ' t');
-  } else {
-    animateValue('mHarvest', 0, harvestInfo.num, 900, v => Math.round(v).toLocaleString());
-  }
-
-  // mRevenue: "$559.25k" -> animate the numeric (in k) and keep suffix
-  const revInfo = detectUnitAndNumber(document.getElementById('mRevenue').textContent);
-  if(/k/i.test(String(document.getElementById('mRevenue').textContent))){
-    animateValue('mRevenue', 0, revInfo.num, 900, v => '$' + Number(v).toFixed(2) + 'k');
-  } else {
-    animateValue('mRevenue', 0, revInfo.num, 900, v => '$' + Math.round(v).toLocaleString());
-  }
-
-  // Active fields
-  const fieldsInfo = detectUnitAndNumber(document.getElementById('mFields').textContent);
-  animateValue('mFields', 0, fieldsInfo.num, 900, v => Math.round(v).toLocaleString());
-
-  // Farm Balance (preserve k)
-  const balInfo = detectUnitAndNumber(document.getElementById('mBalance').textContent);
-  if(/k/i.test(String(document.getElementById('mBalance').textContent))){
-    animateValue('mBalance', 0, balInfo.num, 900, v => '$' + Number(v).toFixed(2) + 'k');
-  } else {
-    animateValue('mBalance', 0, balInfo.num, 900, v => '$' + Math.round(v).toLocaleString());
-  }
-}
-
-/* initialize KPIs for ALL (keeps your original initializations but now animated) */
-(function initKPIs(){
-  const initRange = 'ALL';
-  const lastH = last(datasetByRange[initRange].harvest);
-  const lastR = last(datasetByRange[initRange].revenue);
-  document.getElementById('kpiShipments').textContent = Math.round(lastH * 36).toLocaleString();
-  document.getElementById('kpiRevenue').textContent = '$' + Math.round(lastR * 1000).toLocaleString();
-  document.getElementById('kpiWastage').textContent = Math.round(lastH * 0.12).toLocaleString();
-  document.getElementById('kpiYield').textContent = (80 + (lastH % 20)).toFixed(2) + '%';
-
-  // Animate top cards (new enhancement)
-  updateKPIs(initRange);
-})();
-
-/* ---------- Filters behaviour (preserved + accessible) ---------- */
-document.getElementById('filters').addEventListener('click', (e)=>{
-  if(e.target.matches('.pill')){
-    document.querySelectorAll('.pill').forEach(b=>b.classList.remove('active'));
-    e.target.classList.add('active');
-    const r = e.target.dataset.range;
-    chart.data.labels = datasetByRange[r].labels;
-    chart.data.datasets[0].data = datasetByRange[r].harvest;
-    chart.data.datasets[1].data = datasetByRange[r].revenue;
-    chart.update();
-    updateKPIs(r);
-  }
-});
-
-/* ---------- Date range label (unchanged logic) ---------- */
-const rangeLabel = document.getElementById('rangeLabel');
-const start = new Date(new Date().getFullYear(), 0, 1);
-const end = new Date(new Date().getFullYear(), 0, 31);
-rangeLabel.textContent = start.toLocaleDateString(undefined,{day:'2-digit',month:'short',year:'numeric'})+
-  ' to ' + end.toLocaleDateString(undefined,{day:'2-digit',month:'short',year:'numeric'});
-
-/* ---------- Leaflet Map with sample farm pins (preserved) ---------- */
-const map = L.map('map', {zoomControl:true}).setView([9.0820, 8.6753], 4);
-L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-  attribution: '&copy; OpenStreetMap'
-}).addTo(map);
-
-const farms = [
-  {name:'Kaduna Maize', coords:[10.52,7.44], output:'1,250 t'},
-  {name:'Oyo Cassava', coords:[8.15,3.35], output:'980 t'},
-  {name:'Kano Tomatoes', coords:[12.00,8.52], output:'650 t'},
-  {name:'Accra Vegetables', coords:[5.56,-0.20], output:'420 t'},
-  {name:'Nairobi Dairy', coords:[-1.29,36.82], output:'1,100 L/day'},
-];
-farms.forEach(f=>{
-  L.circleMarker(f.coords,{radius:8,weight:2,color:'#4f46e5',fillColor:'#a5b4fc',fillOpacity:.8})
-    .addTo(map).bindPopup(`<b>${f.name}</b><br>Output: ${f.output}`);
-});
-
-/* ---------- Theme toggle (preserved) ---------- */
-const THEME_KEY = 'agro-theme';
-function applySavedTheme(){
-  const saved = localStorage.getItem(THEME_KEY);
-  if(saved === 'dark') document.documentElement.classList.add('dark');
-  else if(saved === 'light') document.documentElement.classList.remove('dark');
-  else {
-    if(window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches){
-      document.documentElement.classList.add('dark');
-    }
-  }
-}
-applySavedTheme();
-document.getElementById('themeToggle').addEventListener('click', ()=>{
-  const isDark = document.documentElement.classList.toggle('dark');
-  localStorage.setItem(THEME_KEY, isDark ? 'dark' : 'light');
-});
-
-/* ---------- Accessibility: keyboard support for pills (preserved) ---------- */
-document.querySelectorAll('.pill').forEach(btn=>{
-  btn.setAttribute('tabindex','0');
-  btn.addEventListener('keydown', (e)=>{
-    if(e.key === 'Enter' || e.key === ' ') { e.preventDefault(); btn.click(); }
-  });
-});
-
-/* -------------------------------------------
-   ENHANCEMENTS ADDED (non-destructive)
-   - Export CSV
-   - Sidebar weather fetch
-   - Export tasks
-   - Add operation task button
-   ------------------------------------------- */
-
-/* Export KPI CSV (hooked to exportCsvBtn, added in topbar) */
-document.getElementById('exportCsvBtn').addEventListener('click', function(){
-  const rows = [
-    ['Metric','Value'],
-    ['Total Revenue', document.getElementById('mRevenue').textContent],
-    ['Total Harvest', document.getElementById('mHarvest').textContent],
-    ['Active Fields', document.getElementById('mFields').textContent],
-    ['Farm Balance', document.getElementById('mBalance').textContent],
-  ];
-  const csv = rows.map(r => r.join(',')).join('\n');
-  const blob = new Blob([csv], { type: 'text/csv' });
-  const a = document.createElement('a');
-  a.href = URL.createObjectURL(blob);
-  a.download = 'agro_kpis.csv';
-  document.body.appendChild(a);
-  a.click();
-  a.remove();
-});
-
-/* Sidebar weather widget (uses Open-Meteo — no API key required) */
-async function updateSidebarWeather(){
-  try {
-    const lat = 9.0820, lon = 8.6753; // central farm region — change as needed
-    const res = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current_weather=true`);
-    const json = await res.json();
-    if(json && json.current_weather){
-      const cw = json.current_weather;
-      document.getElementById('sidebarWeatherSummary').textContent = `Temp: ${cw.temperature}°C • ${cw.weathercode || ''}`;
-      document.getElementById('sidebarWeatherTemp').textContent = `${cw.temperature}°C`;
-      document.getElementById('sidebarWeatherIcon').textContent = '🌤';
-      document.getElementById('sidebarWeatherUpdated').textContent = new Date().toLocaleTimeString();
-    } else {
-      document.getElementById('sidebarWeatherSummary').textContent = 'Weather data unavailable';
-      document.getElementById('sidebarWeatherTemp').textContent = '';
-      document.getElementById('sidebarWeatherIcon').textContent = '';
-    }
-  } catch (err) {
-    document.getElementById('sidebarWeatherSummary').textContent = 'Weather unavailable';
-    document.getElementById('sidebarWeatherTemp').textContent = '';
-    document.getElementById('sidebarWeatherIcon').textContent = '';
-  }
-}
-updateSidebarWeather();
-
-/* Tasks export + add task (non-destructive) */
-document.getElementById('addOpTask').addEventListener('click', ()=>{
-  const ul = document.getElementById('opTasks');
-  const li = document.createElement('li');
-  const now = new Date();
-  li.textContent = `📝 Quick Task added — ${now.toLocaleString()}`;
-  ul.prepend(li);
-});
-document.getElementById('downloadTasks').addEventListener('click', ()=>{
-  const list = Array.from(document.querySelectorAll('#opTasks li')).map(li => li.textContent);
-  const csv = ['Task'].concat(list).map(r => `"${r.replace(/"/g,'""')}"`).join('\n');
-  const blob = new Blob([csv], { type: 'text/csv' });
-  const a = document.createElement('a');
-  a.href = URL.createObjectURL(blob);
-  a.download = 'agro_tasks.csv';
-  document.body.appendChild(a); a.click(); a.remove();
-});
-
-/* End of enhancements (all original content preserved and untouched structurally) */
-</script>
 </body>
 </html>
+
 
