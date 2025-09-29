@@ -5,96 +5,98 @@
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>AgroLink — Finance</title>
 
-<!-- Fonts & Icons (same as other pages) -->
+<!-- Fonts & Icons -->
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <link href="https://cdn.jsdelivr.net/npm/remixicon@4.3.0/fonts/remixicon.css" rel="stylesheet"/>
 
-<!-- Styles (your global stylesheet) -->
+<!-- Styles (global) -->
 <link rel="stylesheet" href="assets/style.css" />
+<link rel="stylesheet" href="assets/styleo.css" />
 
 <!-- Chart.js -->
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
-
-<!-- Minimal modal styles (keeps everything self-contained) -->
-<style>
-/* Modal overlay */
-.modal {
-  position: fixed;
-  inset: 0;
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  background: rgba(0,0,0,0.45);
-  z-index: 9999;
-}
-.modal.hidden { display: none; }
-.modal-card {
-  background: var(--card, #fff);
-  border-radius: 12px;
-  width: 380px;
-  max-width: calc(100% - 32px);
-  padding: 16px;
-  box-shadow: 0 10px 30px rgba(2,6,23,0.12);
-  font-family: Inter, system-ui, Arial, sans-serif;
-}
-.modal-card h3 { margin: 0 0 8px; font-size:18px; }
-.modal-row { display:flex; flex-direction:column; gap:8px; margin-bottom:8px; }
-.modal-row label { font-size:13px; color:var(--muted,#6b7280); display:block; }
-.modal-row input[type="text"], .modal-row input[type="number"], .modal-row input[type="date"], .modal-row select {
-  width:100%; padding:8px 10px; border-radius:8px; border:1px solid var(--ring,#e5e7eb); background:var(--card);
-  font-size:14px;
-}
-.modal-actions { display:flex; gap:8px; justify-content:flex-end; margin-top:10px; }
-.btn-sm { padding:6px 10px; font-size:13px; border-radius:8px; }
-</style>
+<!-- html2canvas & jsPDF for PDF export -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 </head>
 <body>
-<div class="layout">
-  <aside class="sidebar">
-    <div class="brand"><i class="ri-plant-line"></i> AgroLink</div>
-    <nav class="nav">
-      <h4>MENU</h4>
-      <a href="index.html"><i class="ri-dashboard-line"></i> Dashboard</a>
-      <a href="crops.html"><i class="ri-seedling-line"></i> Crops</a>
-      <a href="livestock.html"><i class="ri-medicine-bottle-line"></i> Livestock</a>
-      <a href="fields.html"><i class="ri-map-pin-line"></i> Fields</a>
-      <a href="weather.html"><i class="ri-cloud-windy-line"></i> Weather</a>
-      <a href="equipment.html"><i class="ri-tools-line"></i> Equipment</a>
-      <a href="finance.html" class="active"><i class="ri-money-dollar-box-line"></i> Finance</a>
-      <a href="reports.html"><i class="ri-bar-chart-2-line"></i> Reports</a>
-      <a href="settings.html"><i class="ri-settings-3-line"></i> Settings</a>
-    </nav>
+<div class="layout" id="layoutRoot">
+  <!-- Sidebar -->
+  <aside class="sidebar" id="sidebar" aria-label="Main menu">
+    <div class="sidebar-top">
+      <div class="brand" title="AgroLink"><i class="ri-plant-line"></i><span class="brand-text">AgroLink</span></div>
+      <nav class="nav" role="navigation">
+        <h4>MENU</h4>
+        <a href="#" class="active" title="Dashboard"><i class="ri-dashboard-line" aria-hidden="true"></i><span class="nav-label">Dashboard</span></a>
+        <a href="crops.html" title="Crops"><i class="ri-seedling-line"></i><span class="nav-label">Crops</span></a>
+        <a href="livestock.html" title="Livestock"><i class="ri-medicine-bottle-line"></i><span class="nav-label">Livestock</span></a>
+        <a href="fields.html" title="Fields"><i class="ri-map-pin-line"></i><span class="nav-label">Fields</span></a>
+        <a href="weather.html" title="Weather"><i class="ri-cloud-windy-line"></i><span class="nav-label">Weather</span></a>
+        <a href="equipment.html" title="Equipment"><i class="ri-tools-line"></i><span class="nav-label">Equipment</span></a>
+        <a href="finance.html" title="Finance"><i class="ri-money-dollar-box-line"></i><span class="nav-label">Finance</span></a>
+        <a href="reports.html" title="Reports"><i class="ri-bar-chart-2-line"></i><span class="nav-label">Reports</span></a>
+        <a href="settings.html" title="Settings"><i class="ri-settings-3-line"></i><span class="nav-label">Settings</span></a>
+      </nav>
+    </div>
+
+    <!-- Sidebar footer weather -->
+    <div class="sidebar-footer" aria-hidden="false">
+      <div class="small-muted" style="margin-bottom:6px; font-weight:600">Local Weather</div>
+      <div class="wrow">
+        <div id="sidebarWeatherMain" style="display:flex; flex-direction:column; gap:4px;">
+          <div id="sidebarWeatherSummary" class="small-muted">Loading...</div>
+          <div id="sidebarWeatherTemp" style="font-weight:600"></div>
+        </div>
+        <div id="sidebarWeatherIcon" style="font-size:18px; opacity:.95"></div>
+      </div>
+      <div style="margin-top:8px; font-size:12px; color:rgba(255,255,255,0.6)">Updated: <span id="sidebarWeatherUpdated">—</span></div>
+    </div>
   </aside>
 
+  <!-- Mobile backdrop for sidebar -->
+  <div id="sidebarBackdrop" class="sidebar-backdrop hidden" aria-hidden="true"></div>
+
+  <!-- Main -->
   <main>
+    <!-- Topbar -->
     <div class="topbar">
-      <div class="search"><i class="ri-search-line"></i><input id="globalSearch" placeholder="Search invoices, expenses, etc..." /></div>
+      <div style="display:flex;align-items:center;gap:10px">
+        <!-- Collapse / menu button (placed before search) -->
+        <button id="collapseBtn" class="btn" aria-label="Toggle menu" title="Toggle menu"><i class="ri-menu-line"></i></button>
+
+        <!-- Search -->
+        <div class="search" role="search">
+          <i class="ri-search-line" aria-hidden="true"></i>
+          <input aria-label="Search" placeholder="Search fields, crops, tasks..." />
+        </div>
+      </div>
+
       <div class="top-actions">
-        <button class="btn"><i class="ri-calendar-line"></i><span id="rangeLabel">Jan 2025</span></button>
-        <button id="exportCsv" class="btn"><i class="ri-file-download-line"></i> Export CSV</button>
-        <button id="addTransaction" class="btn btn-primary"><i class="ri-add-circle-line"></i> Transaction</button>
-        <button id="themeToggle" class="theme-toggle"><i class="ri-contrast-2-line"></i> Theme</button>
+        <button id="exportCsv" class="btn btn-ghost"><i class="ri-file-download-line"></i> Export CSV</button>
+        <button id="addTransaction" class="btn btn-primary"><i class="ri-add-circle-line"></i> Add</button>
+        <button id="exportPdf" class="btn btn-primary"><i class="ri-file-pdf-line"></i> Export PDF</button>
+        <button id="themeToggle" class="btn btn-ghost"><i class="ri-contrast-2-line"></i> Theme</button>
         <div class="avatar">
           <img src="https://i.pravatar.cc/60?img=31" alt="">
           <div>
-            <div style="font-weight:600">Oluwasegun Oyebode</div>
+            <div class="avatar-name">Oluwasegun Oyebode</div>
             <small class="subtitle">Farm Director</small>
           </div>
         </div>
       </div>
     </div>
 
-    <div class="content">
-      <div style="display:flex;justify-content:space-between;align-items:flex-end;flex-wrap:wrap;gap:14px">
+    <div class="content" id="contentArea">
+      <div class="page-header">
         <div>
           <div class="page-title">Finance Dashboard</div>
-          <div class="subtitle">Revenue, expenses, cashflow and forecasting for smarter farm finance.</div>
+          <div class="subtitle">Revenue, expenses, loans, & forecasting tailored for farms.</div>
         </div>
-        <div style="display:flex;gap:8px">
-          <button id="refreshData" class="btn"><i class="ri-refresh-line"></i> Refresh</button>
-          <select id="timeRange" class="btn" style="padding:6px 10px;">
+        <div class="header-actions">
+          <button id="refreshData" class="btn btn-ghost"><i class="ri-refresh-line"></i> Refresh</button>
+          <select id="timeRange" class="btn">
             <option value="1M">Last 1M</option>
             <option value="3M">Last 3M</option>
             <option value="6M" selected>Last 6M</option>
@@ -105,57 +107,37 @@
       </div>
 
       <!-- KPIs -->
-      <section class="grid metrics" style="margin-top:16px">
-        <div class="card">
-          <div class="metric">
-            <div>
-              <small>Total Revenue</small>
-              <h3 id="totalRevenue">$124.3k</h3>
-              <small class="up" id="revChange">▲ +8.2%</small>
-            </div>
-            <div class="icon" style="background:#eef2ff;color:#4f46e5"><i class="ri-money-dollar-circle-line"></i></div>
-          </div>
+      <section class="grid metrics">
+        <div class="card small-kpi">
+          <small>Total Revenue</small>
+          <h3 id="totalRevenue">$0</h3>
+          <small id="revChange" class="muted small-muted">—</small>
         </div>
-        <div class="card">
-          <div class="metric">
-            <div>
-              <small>Total Expenses</small>
-              <h3 id="totalExpenses">$78.9k</h3>
-              <small class="down" id="expChange">▼ −3.0%</small>
-            </div>
-            <div class="icon" style="background:#fff7ed;color:#f97316"><i class="ri-stack-line"></i></div>
-          </div>
+        <div class="card small-kpi">
+          <small>Total Expenses</small>
+          <h3 id="totalExpenses">$0</h3>
+          <small id="expChange" class="muted small-muted">—</small>
         </div>
-        <div class="card">
-          <div class="metric">
-            <div>
-              <small>Profit</small>
-              <h3 id="profit">$45.4k</h3>
-              <small class="muted">Net (Revenue − Expenses)</small>
-            </div>
-            <div class="icon" style="background:#ecfdf5;color:#16a34a"><i class="ri-bar-chart-line"></i></div>
-          </div>
+        <div class="card small-kpi">
+          <small>Profit</small>
+          <h3 id="profit">$0</h3>
+          <small class="muted small-muted">Net (Revenue − Expenses)</small>
         </div>
-        <div class="card">
-          <div class="metric">
-            <div>
-              <small>Cash Flow</small>
-              <h3 id="cashFlow">$12.1k</h3>
-              <small class="muted">Rolling 30-day</small>
-            </div>
-            <div class="icon" style="background:#ecfeff;color:#0891b2"><i class="ri-repeat-line"></i></div>
-          </div>
+        <div class="card small-kpi">
+          <small>Cash Flow</small>
+          <h3 id="cashFlow">$0</h3>
+          <small class="muted small-muted">Rolling 30-day</small>
         </div>
       </section>
 
-      <!-- Charts row -->
-      <section class="split" style="margin-top:16px">
+      <!-- charts -->
+      <section class="split">
         <div class="card">
-          <div style="display:flex;justify-content:space-between;align-items:center;">
+          <div class="card-head" style="display:flex;justify-content:space-between;align-items:center;">
             <h4>Revenue vs Expenses</h4>
-            <div style="display:flex;gap:8px;align-items:center">
+            <div class="inline-controls">
               <label class="small-muted">Category</label>
-              <select id="categoryFilter" class="btn" style="padding:6px 10px;">
+              <select id="categoryFilter" class="btn">
                 <option value="all">All</option>
                 <option value="Crops">Crops</option>
                 <option value="Livestock">Livestock</option>
@@ -171,28 +153,32 @@
         <div class="card">
           <h4>Expense Distribution</h4>
           <canvas id="expensePie" height="180"></canvas>
-          <div style="margin-top:8px;text-align:center"><button id="exportExpenses" class="btn">Export Expenses</button></div>
+          <div style="margin-top:8px;text-align:center"><button id="exportExpenses" class="btn btn-ghost">Export Expenses</button></div>
         </div>
       </section>
 
-      <!-- Cashflow timeline + Forecast -->
-      <section class="card" style="margin-top:16px">
-        <div style="display:flex;justify-content:space-between;align-items:center;">
+      <section class="card">
+        <h4>Seasonal Cashflow (Projected)</h4>
+        <canvas id="seasonalChart" height="120"></canvas>
+      </section>
+
+      <section class="card">
+        <div class="card-head" style="display:flex;justify-content:space-between;align-items:center;">
           <h4>Cash Flow Timeline & Forecast</h4>
-          <div style="display:flex;gap:8px">
+          <div>
             <button id="toggleForecast" class="btn">Toggle Forecast</button>
-            <button id="downloadReport" class="btn">Download Report</button>
+            <button id="downloadReport" class="btn btn-ghost">Download Report</button>
           </div>
         </div>
-        <canvas id="cashflowChart" height="120"></canvas>
+        <canvas id="cashflowChart" height="140"></canvas>
       </section>
 
-      <!-- Expense table with filters -->
-      <section class="card" style="margin-top:16px">
+      <!-- Expense tracker -->
+      <section class="card">
         <h4>Expense Tracker</h4>
-        <div style="display:flex;gap:8px;align-items:center;margin-bottom:10px;">
-          <input id="expenseSearch" placeholder="Search expense description..." class="btn" style="padding:8px;width:320px" />
-          <select id="expenseCategory" class="btn" style="padding:6px 10px;">
+        <div class="controls-row">
+          <input id="expenseSearch" placeholder="Search expense description..." class="input" />
+          <select id="expenseCategory" class="btn">
             <option value="all">All Categories</option>
             <option value="Crops">Crops</option>
             <option value="Livestock">Livestock</option>
@@ -200,148 +186,274 @@
             <option value="Labor">Labor</option>
             <option value="Supplies">Supplies</option>
           </select>
-          <button id="addExpenseBtn" class="btn btn-primary">Add Expense</button>
-          <button id="exportExpenseCsv" class="btn">Export CSV</button>
+          <div class="controls-row-right">
+            <button id="addExpenseBtn" class="btn btn-primary">Add Expense</button>
+            <button id="exportExpenseCsv" class="btn btn-ghost">Export CSV</button>
+          </div>
         </div>
 
         <div class="table-wrap">
-          <table id="expenseTable" style="width:100%;border-collapse:collapse;margin-top:10px;font-size:14px;">
-            <thead style="background:var(--muted);text-align:left">
-              <tr>
-                <th style="padding:8px">Date</th>
-                <th>Category</th>
-                <th>Description</th>
-                <th>Amount</th>
-                <th>Receipt</th>
-                <th style="text-align:center">Action</th>
-              </tr>
+          <table id="expenseTable">
+            <thead>
+              <tr><th>Date</th><th>Category</th><th>Description</th><th>Amount</th><th>Field</th><th>Receipt</th><th style="text-align:center">Action</th></tr>
             </thead>
-            <tbody>
-              <!-- dynamic -->
-            </tbody>
+            <tbody></tbody>
           </table>
         </div>
       </section>
 
-      <!-- Invoices / Receipts -->
-      <section class="card" style="margin-top:16px">
+      <!-- Invoices -->
+      <section class="card">
         <h4>Invoices & Receivables</h4>
-        <div style="display:flex;gap:8px;align-items:center;margin-bottom:10px;">
+        <div style="display:flex;gap:8px;align-items:center;margin-bottom:10px">
           <button id="newInvoice" class="btn btn-primary">Create Invoice</button>
-          <button id="exportInvoices" class="btn">Export Invoices</button>
+          <button id="exportInvoices" class="btn btn-ghost">Export Invoices</button>
         </div>
 
         <div class="table-wrap">
-          <table id="invoiceTable" style="width:100%;border-collapse:collapse;margin-top:10px;font-size:14px;">
-            <thead style="background:var(--muted);text-align:left">
-              <tr>
-                <th style="padding:8px">Invoice #</th>
-                <th>Client</th>
-                <th>Date</th>
-                <th>Amount</th>
-                <th>Status</th>
-                <th style="text-align:center">Action</th>
-              </tr>
+          <table id="invoiceTable">
+            <thead>
+              <tr><th>Invoice #</th><th>Client</th><th>Date</th><th>Amount</th><th>Status</th><th style="text-align:center">Action</th></tr>
             </thead>
-            <tbody>
-              <!-- dynamic -->
-            </tbody>
+            <tbody></tbody>
+          </table>
+        </div>
+
+        <div class="row-cards" style="margin-top:12px">
+          <div class="mini-card">
+            <small>Receivables Aging</small>
+            <div id="agingBuckets" class="aging"></div>
+          </div>
+          <div class="mini-card">
+            <small>Input Costs (by field)</small>
+            <div id="inputCostSummary">—</div>
+          </div>
+        </div>
+      </section>
+
+
+      <!-- ======================
+     Per-field P&L & Budgets & Supplier/PO Flow
+     (Add to finance.html above Loan Tracker)
+     ====================== -->
+
+<!-- Per-field P&L -->
+<section class="card" id="fieldPLSection">
+  <h4>Per-field P&L Overview</h4>
+  <div class="table-wrap">
+    <table id="fieldPLTable">
+      <thead>
+        <tr><th>Field</th><th>Area (ha)</th><th>Revenue</th><th>Expenses</th><th>Profit</th><th>Profit / ha</th><th style="text-align:center">Action</th></tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+  </div>
+  <div style="margin-top:10px;">
+    <small class="muted">Click 'View' to drill into the field (transactions & chart)</small>
+  </div>
+</section>
+
+<!-- Field Drilldown Drawer (re-uses drawer style) -->
+<aside id="fieldDrawer" class="drawer hidden" aria-hidden="true" style="width:520px;">
+  <div class="drawer-header">
+    <h3 id="fieldDrawerTitle">Field</h3>
+    <button id="fieldDrawerClose" class="btn btn-ghost">✕</button>
+  </div>
+  <div class="drawer-body">
+    <div id="fieldSummary"></div>
+    <canvas id="fieldPLChart" height="220"></canvas>
+    <h5 style="margin-top:8px">Transactions</h5>
+    <div class="table-wrap">
+      <table id="fieldTransTable">
+        <thead><tr><th>Date</th><th>Type</th><th>Category</th><th>Amount</th></tr></thead>
+        <tbody></tbody>
+      </table>
+    </div>
+  </div>
+</aside>
+<div id="fieldBackdrop" class="drawer-backdrop hidden"></div>
+
+<!-- Budgeting / Seasonal planner -->
+<section class="card" id="budgetSection">
+  <div style="display:flex;justify-content:space-between;align-items:center">
+    <h4>Seasonal Budget Planner</h4>
+    <div style="display:flex;gap:8px;align-items:center">
+      <button id="addBudgetBtn" class="btn btn-primary">Add Budget</button>
+      <button id="exportBudgetCsv" class="btn btn-ghost">Export CSV</button>
+    </div>
+  </div>
+
+  <div style="display:flex;gap:12px;flex-wrap:wrap;margin-top:8px">
+    <div style="flex:1;min-width:260px">
+      <div class="table-wrap">
+        <table id="budgetTable">
+          <thead><tr><th>Season</th><th>Category</th><th>Planned</th><th>Used</th><th style="text-align:center">Action</th></tr></thead>
+          <tbody></tbody>
+        </table>
+      </div>
+    </div>
+    <div style="width:480px">
+      <h5 class="muted">Seasonal Budget Chart</h5>
+      <canvas id="seasonalBudgetChart" height="220"></canvas>
+    </div>
+  </div>
+</section>
+
+<!-- Supplier / PO flow -->
+<section class="card" id="poSection">
+  <div style="display:flex;justify-content:space-between;align-items:center">
+    <h4>Suppliers & Purchase Orders (PO)</h4>
+    <div style="display:flex;gap:8px;align-items:center">
+      <button id="addPOBtn" class="btn btn-primary">New PO</button>
+      <button id="exportPOCsv" class="btn btn-ghost">Export POs</button>
+    </div>
+  </div>
+
+  <div class="table-wrap" style="margin-top:8px">
+    <table id="poTable">
+      <thead><tr><th>PO #</th><th>Supplier</th><th>Date</th><th>Amount</th><th>Status</th><th>Receipt</th><th style="text-align:center">Action</th></tr></thead>
+      <tbody></tbody>
+    </table>
+  </div>
+</section>
+
+<!-- PO Drawer (reuse drawer) -->
+<aside id="poDrawer" class="drawer hidden" aria-hidden="true">
+  <div class="drawer-header">
+    <h3 id="poTitle">Create PO</h3>
+    <button id="poClose" class="btn btn-ghost">✕</button>
+  </div>
+
+  <form id="poForm" class="drawer-body">
+    <label>PO Number</label>
+    <input id="poNumber" required />
+
+    <label>Supplier</label>
+    <input id="poSupplier" required />
+
+    <label>Date</label>
+    <input id="poDate" type="date" required />
+
+    <label>Amount</label>
+    <input id="poAmount" type="number" min="0" step="0.01" required />
+
+    <label>Field / Project (optional)</label>
+    <input id="poField" placeholder="F1" />
+
+    <label>Upload Receipt (image/pdf)</label>
+    <input id="poReceipt" type="file" accept="image/*,.pdf" />
+
+    <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:8px">
+      <button type="button" id="poCancel" class="btn btn-ghost">Cancel</button>
+      <button type="submit" class="btn btn-primary">Save PO</button>
+    </div>
+  </form>
+</aside>
+<div id="poBackdrop" class="drawer-backdrop hidden"></div>
+
+
+      <!-- loan tracker -->
+      <section class="card">
+        <h4>Loan Tracker</h4>
+        <div class="loan-controls">
+          <div id="loanSummary" class="muted">0 loans</div>
+          <div>
+            <button id="addLoanBtn" class="btn btn-primary">Add Loan</button>
+            <button id="exportLoans" class="btn btn-ghost">Export Loans</button>
+          </div>
+        </div>
+
+        <div class="table-wrap">
+          <table id="loanTable">
+            <thead>
+              <tr><th>Loan ID</th><th>Provider</th><th>Amount</th><th>Outstanding</th><th>Next Payment</th><th style="text-align:center">Action</th></tr>
+            </thead>
+            <tbody></tbody>
           </table>
         </div>
       </section>
+
     </div>
   </main>
 </div>
 
-<!-- Floating Actions -->
-<div class="footer-actions">
-  <button class="fab"><i class="ri-equalizer-line"></i></button>
-  <button class="fab" style="background:#22c55e"><i class="ri-question-line"></i></button>
-</div>
+<!-- Drawer (reusable) -->
+<div id="drawerBackdrop" class="drawer-backdrop hidden"></div>
+<aside id="drawer" class="drawer hidden" aria-hidden="true">
+  <div class="drawer-header">
+    <h3 id="drawerTitle">Add</h3>
+    <button id="drawerClose" class="btn btn-ghost">✕</button>
+  </div>
 
-<!-- Expense Modal -->
-<div id="expenseModal" class="modal hidden" aria-hidden="true">
-  <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="expenseModalTitle">
-    <h3 id="expenseModalTitle">Add Expense</h3>
-    <div class="modal-row">
-      <label for="expDate">Date</label>
-      <input id="expDate" type="date" />
+  <form id="drawerForm" class="drawer-body" enctype="multipart/form-data">
+    <label>Entry Type</label>
+    <select id="entryType" required>
+      <option value="expense">Expense</option>
+      <option value="invoice">Invoice</option>
+      <option value="loan">Loan</option>
+    </select>
+
+    <label id="labelCategory">Category / Client / Provider</label>
+    <input id="entryCategory" placeholder="e.g., Crops / Dairy Coop / Bank" required />
+
+    <label id="labelDesc">Description</label>
+    <input id="entryDesc" placeholder="Short description" />
+
+    <label>Amount</label>
+    <input id="entryAmount" type="number" min="0" step="0.01" placeholder="0.00" required />
+
+    <label>Field ID (optional)</label>
+    <input id="entryField" placeholder="e.g., F1 (link expense to a field)" />
+
+    <label id="labelReceipt">Receipt (image/pdf)</label>
+    <input id="entryReceipt" type="file" accept="image/*,.pdf" />
+
+    <label id="labelNextPayment">Next Payment (loan)</label>
+    <input id="entryNextPayment" type="date" />
+
+    <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:12px">
+      <button type="button" id="drawerCancel" class="btn btn-ghost">Cancel</button>
+      <button type="submit" class="btn btn-primary">Save</button>
     </div>
-    <div class="modal-row">
-      <label for="expCategory">Category</label>
-      <select id="expCategory">
-        <option value="Crops">Crops</option>
-        <option value="Livestock">Livestock</option>
-        <option value="Equipment">Equipment</option>
-        <option value="Labor">Labor</option>
-        <option value="Supplies">Supplies</option>
-      </select>
+  </form>
+</aside>
+
+<!-- Amortization modal -->
+<div id="amortBackdrop" class="drawer-backdrop hidden"></div>
+<aside id="amortModal" class="drawer hidden" aria-hidden="true" style="width:520px;">
+  <div class="drawer-header">
+    <h3>Loan Amortization Calculator</h3>
+    <button id="amortClose" class="btn btn-ghost">✕</button>
+  </div>
+  <div class="drawer-body">
+    <label>Loan Amount</label>
+    <input id="amortAmount" type="number" value="10000" />
+    <label>Annual Interest Rate (%)</label>
+    <input id="amortRate" type="number" value="12" step="0.01" />
+    <label>Term (months)</label>
+    <input id="amortTerm" type="number" value="12" />
+    <label>First Payment Date</label>
+    <input id="amortFirst" type="date" />
+    <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:12px">
+      <button id="amortCalc" class="btn btn-primary">Calculate</button>
     </div>
-    <div class="modal-row">
-      <label for="expDesc">Description</label>
-      <input id="expDesc" type="text" placeholder="e.g. Fertilizer batch #A1" />
-    </div>
-    <div class="modal-row">
-      <label for="expAmt">Amount</label>
-      <input id="expAmt" type="number" placeholder="0.00" />
-    </div>
-    <div class="modal-actions">
-      <button id="saveExpense" class="btn btn-primary btn-sm">Save Expense</button>
-      <button class="btn btn-sm" onclick="closeModal('expenseModal')">Cancel</button>
+
+    <div id="amortResult" style="margin-top:12px"></div>
+    <div class="table-wrap" style="margin-top:10px">
+      <table id="amortTable">
+        <thead><tr><th>#</th><th>Date</th><th>Principal</th><th>Interest</th><th>Remaining</th></tr></thead>
+        <tbody></tbody>
+      </table>
     </div>
   </div>
-</div>
+</aside>
 
-<!-- Invoice Modal -->
-<div id="invoiceModal" class="modal hidden" aria-hidden="true">
-  <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="invoiceModalTitle">
-    <h3 id="invoiceModalTitle">Create Invoice</h3>
-    <div class="modal-row">
-      <label for="invClient">Client</label>
-      <input id="invClient" type="text" placeholder="Client name" />
-    </div>
-    <div class="modal-row">
-      <label for="invDate">Date</label>
-      <input id="invDate" type="date" />
-    </div>
-    <div class="modal-row">
-      <label for="invAmt">Amount</label>
-      <input id="invAmt" type="number" placeholder="0.00" />
-    </div>
-    <div class="modal-row">
-      <label for="invStatus">Status</label>
-      <select id="invStatus">
-        <option value="Pending">Pending</option>
-        <option value="Paid">Paid</option>
-      </select>
-    </div>
-    <div class="modal-actions">
-      <button id="saveInvoice" class="btn btn-primary btn-sm">Save Invoice</button>
-      <button class="btn btn-sm" onclick="closeModal('invoiceModal')">Cancel</button>
-    </div>
-  </div>
-</div>
+<!-- Toast container -->
+<div id="toastContainer" class="toast-container" aria-live="polite" aria-atomic="true"></div>
 
-<!-- App scripts -->
+<!-- Scripts -->
 <script src="assets/script.js"></script>
-<script src="assets/finance.js"></script>
-
-
-<!-- Reusable Modal -->
-<div id="modalOverlay" class="modal-overlay" style="display:none;">
-  <div class="modal">
-    <div class="modal-header">
-      <h3 id="modalTitle">Add Record</h3>
-      <button id="modalClose" class="btn">×</button>
-    </div>
-    <form id="modalForm" class="modal-body">
-      <!-- Dynamic fields will be injected here -->
-    </form>
-    <div class="modal-footer">
-      <button type="submit" form="modalForm" class="btn btn-primary">Save</button>
-    </div>
-  </div>
-</div>
-
+<script src="assets/financeo.js"></script>
+<script src="assets/finance-advanced.js"></script>  
 </body>
 </html>

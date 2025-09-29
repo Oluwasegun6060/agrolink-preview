@@ -18,29 +18,57 @@
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
 </head>
 <body>
-<div class="layout">
+<div class="layout" id="layoutRoot">
   <!-- Sidebar -->
-  <aside class="sidebar">
-    <div class="brand"><i class="ri-plant-line"></i> AgroLink</div>
-    <nav class="nav">
-      <h4>MENU</h4>
-      <a href="index.html"><i class="ri-dashboard-line"></i> Dashboard</a>
-      <a href="crops.html" class="active"><i class="ri-seedling-line"></i> Crops</a>
-      <a href="livestock.html"><i class="ri-medicine-bottle-line"></i> Livestock</a>
-      <a href="fields.html"><i class="ri-map-pin-line"></i> Fields</a>
-      <a href="weather.html"><i class="ri-cloud-windy-line"></i> Weather</a>
-      <a href="equipment.html"><i class="ri-tools-line"></i> Equipment</a>
-      <a href="finance.html"><i class="ri-money-dollar-box-line"></i> Finance</a>
-      <a href="reports.html"><i class="ri-bar-chart-2-line"></i> Reports</a>
-      <a href="settings.html"><i class="ri-settings-3-line"></i> Settings</a>
-    </nav>
+  <aside class="sidebar" id="sidebar" aria-label="Main menu">
+    <div class="sidebar-top">
+      <div class="brand" title="AgroLink"><i class="ri-plant-line"></i><span class="brand-text">AgroLink</span></div>
+      <nav class="nav" role="navigation">
+        <h4>MENU</h4>
+        <a href="#" class="active" title="Dashboard"><i class="ri-dashboard-line" aria-hidden="true"></i><span class="nav-label">Dashboard</span></a>
+        <a href="crops.html" title="Crops"><i class="ri-seedling-line"></i><span class="nav-label">Crops</span></a>
+        <a href="livestock.html" title="Livestock"><i class="ri-medicine-bottle-line"></i><span class="nav-label">Livestock</span></a>
+        <a href="fields.html" title="Fields"><i class="ri-map-pin-line"></i><span class="nav-label">Fields</span></a>
+        <a href="weather.html" title="Weather"><i class="ri-cloud-windy-line"></i><span class="nav-label">Weather</span></a>
+        <a href="equipment.html" title="Equipment"><i class="ri-tools-line"></i><span class="nav-label">Equipment</span></a>
+        <a href="finance.html" title="Finance"><i class="ri-money-dollar-box-line"></i><span class="nav-label">Finance</span></a>
+        <a href="reports.html" title="Reports"><i class="ri-bar-chart-2-line"></i><span class="nav-label">Reports</span></a>
+        <a href="settings.html" title="Settings"><i class="ri-settings-3-line"></i><span class="nav-label">Settings</span></a>
+      </nav>
+    </div>
+
+    <!-- Sidebar footer weather -->
+    <div class="sidebar-footer" aria-hidden="false">
+      <div class="small-muted" style="margin-bottom:6px; font-weight:600">Local Weather</div>
+      <div class="wrow">
+        <div id="sidebarWeatherMain" style="display:flex; flex-direction:column; gap:4px;">
+          <div id="sidebarWeatherSummary" class="small-muted">Loading...</div>
+          <div id="sidebarWeatherTemp" style="font-weight:600"></div>
+        </div>
+        <div id="sidebarWeatherIcon" style="font-size:18px; opacity:.95"></div>
+      </div>
+      <div style="margin-top:8px; font-size:12px; color:rgba(255,255,255,0.6)">Updated: <span id="sidebarWeatherUpdated">—</span></div>
+    </div>
   </aside>
+
+  <!-- Mobile backdrop for sidebar -->
+  <div id="sidebarBackdrop" class="sidebar-backdrop hidden" aria-hidden="true"></div>
 
   <!-- Main -->
   <main>
     <!-- Topbar -->
     <div class="topbar">
-      <div class="search"><i class="ri-search-line"></i><input placeholder="Search crops, fields, tasks..." /></div>
+      <div style="display:flex;align-items:center;gap:10px">
+        <!-- Collapse / menu button (placed before search) -->
+        <button id="collapseBtn" class="btn" aria-label="Toggle menu" title="Toggle menu"><i class="ri-menu-line"></i></button>
+
+        <!-- Search -->
+        <div class="search" role="search">
+          <i class="ri-search-line" aria-hidden="true"></i>
+          <input aria-label="Search" placeholder="Search fields, crops, tasks..." />
+        </div>
+      </div>
+
       <div class="top-actions">
         <button class="btn"><i class="ri-calendar-line"></i><span id="rangeLabel">Jan 2025</span></button>
         <button class="btn btn-primary"><i class="ri-add-circle-line"></i> Add Crop</button>
